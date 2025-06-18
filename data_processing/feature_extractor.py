@@ -7,59 +7,38 @@ class ProcessedData(NamedTuple):
     targets: np.ndarray  # (N-1, 7) delta states (derivatives)
     timestamps: np.ndarray  # (N-1,) aligned timestamps
 
-def extract_features(raw_data) -> ProcessedData:
+def extract_features(raw_data, jump_thr: float = 0.002) -> ProcessedData:
     """
     Converts raw Isaac Sim data to model-ready features and targets.
-    
-    Steps:
-    1. Extract 15D input features from raw arrays
-    2. Compute 7D delta states via numerical differentiation
-    3. Align timestamps with derivative calculations
+    Removes samples with abrupt steering transitions internally.
     """
-    # 1. Input Feature Extraction 
-    n_samples = raw_data.n_samples
-    
-    # Initialize input array (N, 15)
+    # 1. Remove abrupt steering transitions
+    steering = raw_data.data['target_steering'].mean(axis=1)
+    cleaned_data, _ = remove_steering_jumps(steering, raw_data.data, jump_thr=jump_thr, buffer=1)
+    n_samples = len(cleaned_data['timestamps'])
+
+    # 2. Input Feature Extraction
     inputs = np.zeros((n_samples, 15), dtype=np.float32)
-    
-    # Steering (average of front wheels)
-    inputs[:, 0] = raw_data.data['target_steering'].mean(axis=1)
-    
-    # Velocities [vx, vy, vz, wx, wy, wz]
-    inputs[:, 1:7] = raw_data.data['root_velocity']
-    
-    # Quaternion [qw, qx, qy, qz] from root_pose
-    inputs[:, 7] = raw_data.data['root_pose'][:, 6]  # qw
-    inputs[:, 8:11] = raw_data.data['root_pose'][:, 3:6]  # qx, qy, qz
-    
-    # Accelerations [ax, ay, az]
-    inputs[:, 11:14] = raw_data.data['root_acceleration_base_link']
-    
-    # Steering speed (average of front wheel steering velocities)
-    steer_vel_left = raw_data.data['joint_velocity_front_left_wheel_steer']
-    steer_vel_right = raw_data.data['joint_velocity_front_right_wheel_steer']
+    inputs[:, 0] = cleaned_data['target_steering'].mean(axis=1)
+    inputs[:, 1:7] = cleaned_data['root_velocity']
+    inputs[:, 7] = cleaned_data['root_pose'][:, 6]  # qw
+    inputs[:, 8:11] = cleaned_data['root_pose'][:, 3:6]  # qx, qy, qz
+    inputs[:, 11:14] = cleaned_data['root_acceleration_base_link']
+    steer_vel_left = cleaned_data['joint_velocity_front_left_wheel_steer']
+    steer_vel_right = cleaned_data['joint_velocity_front_right_wheel_steer']
     inputs[:, 14] = (steer_vel_left + steer_vel_right) / 2.0
 
-    # 2. Delta State Computation
-    dt = np.diff(raw_data.data['timestamps'])
-    
-    # Position derivatives (dx, dy)
-    pos = raw_data.data['root_pose'][:, :2]  # x,y only
+    # 3. Delta State Computation
+    dt = np.diff(cleaned_data['timestamps'])
+    pos = cleaned_data['root_pose'][:, :2]
     pos_deriv = np.diff(pos, axis=0) / dt[:, None]
-    
-    # Steering derivative
     steering = inputs[:, 0]
     steer_deriv = np.diff(steering) / dt
-    
-    # Acceleration derivatives (direct from data)
-    accel_deriv = raw_data.data['root_acceleration_base_link'][:-1, :2]  # dvx, dvy
-    ang_accel_z = raw_data.data['root_acceleration_base_link'][:-1, 2]  # dwz
-    
-    # Yaw derivative from quaternion
+    accel_deriv = cleaned_data['root_acceleration_base_link'][:-1, :2]
+    ang_accel_z = cleaned_data['root_acceleration_base_link'][:-1, 2]
     yaw = quaternion_to_yaw(inputs[:, 7:11])
     yaw_deriv = np.diff(yaw) / dt
-    
-    # Combine targets (N-1, 7)
+
     targets = np.column_stack([
         pos_deriv,        # dx, dy
         steer_deriv,      # d_steering
@@ -67,12 +46,39 @@ def extract_features(raw_data) -> ProcessedData:
         ang_accel_z,      # dwz
         yaw_deriv         # dyaw
     ])
-    
-    # 3. Temporal Alignment 
     inputs = inputs[:-1]
-    timestamps = raw_data.data['timestamps'][:-1]
-    
+    timestamps = cleaned_data['timestamps'][:-1]
     return ProcessedData(inputs, targets, timestamps)
+def remove_steering_jumps(steering: np.ndarray, data_arrays: dict, jump_thr: float = 0.002, buffer: int = 1):
+    """
+    Remove samples where the change in steering angle exceeds jump_thr.
+    
+    Args:
+        steering: 1D numpy array of steering angles (shape: N,)
+        data_arrays: Dictionary of arrays (all shape N or (N, ...)) to be filtered.
+        jump_thr: Threshold for detecting abrupt steering changes.
+        buffer: Number of samples before and after each jump to remove.
+    
+    Returns:
+        filtered_arrays: Dictionary of arrays with abrupt transitions removed.
+        kept_mask: Boolean mask indicating which samples are kept.
+    """
+    # Find indices where steering changes abruptly
+    diffs = np.abs(np.diff(steering))
+    boundaries = np.where(diffs > jump_thr)[0]
+    
+    # Build mask: start with all True
+    mask = np.ones_like(steering, dtype=bool)
+    for idx in boundaries:
+        for offset in range(-buffer, buffer + 1):
+            j = idx + offset
+            if 0 <= j < len(mask):
+                mask[j] = False
+    
+    # Apply mask to all arrays
+    filtered_arrays = {k: v[mask] for k, v in data_arrays.items()}
+    return filtered_arrays, mask
+
 
 def quaternion_to_yaw(quaternions: np.ndarray) -> np.ndarray:
     """Convert quaternion array to yaw angles (radians)"""
@@ -116,13 +122,13 @@ if __name__ == "__main__":
     # targets = processed.targets
 
     # For demonstration, here's how to select the first 1000 samples:
-    N = 20000
+    N = 125000
     inputs_plot = processed.inputs[:N]  # Access .inputs from ProcessedData
     targets_plot = processed.targets[:N]
 
     fig, axs = plt.subplots(3, 2, figsize=(12, 10))
 
-    # Steering angle
+    # Steering anglef
     axs[0, 0].plot(inputs_plot[:, 0])
     axs[0, 0].set_title('Steering Angle over Time')
     axs[0, 0].set_xlabel('Sample')
@@ -166,4 +172,64 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.show()
 
-        
+    max_hist = min(100000, processed.inputs.shape[0], processed.targets.shape[0])
+    inputs_hist = processed.inputs[:max_hist]
+    targets_hist = processed.targets[:max_hist]
+
+    import matplotlib.pyplot as plt
+
+    fig, axs = plt.subplots(3, 3, figsize=(16, 12))
+    fig.suptitle('Histograms of Control Inputs and State Features', fontsize=16)
+
+    # Row 1: Steering angle, steering speed, vx
+    axs[0, 0].hist(inputs_hist[:, 0], bins=50, color='blue', alpha=0.7)
+    axs[0, 0].set_title('Steering Angle')
+    axs[0, 0].set_xlabel('Steering Angle (rad)')
+    axs[0, 0].set_ylabel('Frequency')
+
+    axs[0, 1].hist(inputs_hist[:, 14], bins=50, color='green', alpha=0.7)
+    axs[0, 1].set_title('Steering Speed')
+    axs[0, 1].set_xlabel('Steering Speed (rad/s)')
+    axs[0, 1].set_ylabel('Frequency')
+
+    axs[0, 2].hist(inputs_hist[:, 1], bins=50, color='red', alpha=0.7)
+    axs[0, 2].set_title('Linear Velocity vx')
+    axs[0, 2].set_xlabel('vx (m/s)')
+    axs[0, 2].set_ylabel('Frequency')
+
+    # Row 2: vy, vz, dx
+    axs[1, 0].hist(inputs_hist[:, 2], bins=50, color='orange', alpha=0.7)
+    axs[1, 0].set_title('Linear Velocity vy')
+    axs[1, 0].set_xlabel('vy (m/s)')
+    axs[1, 0].set_ylabel('Frequency')
+
+    axs[1, 1].hist(inputs_hist[:, 3], bins=50, color='purple', alpha=0.7)
+    axs[1, 1].set_title('Linear Velocity vz')
+    axs[1, 1].set_xlabel('vz (m/s)')
+    axs[1, 1].set_ylabel('Frequency')
+
+    axs[1, 2].hist(targets_hist[:, 0], bins=50, color='cyan', alpha=0.7)
+    axs[1, 2].set_title('Position Derivative dx')
+    axs[1, 2].set_xlabel('dx (m/s)')
+    axs[1, 2].set_ylabel('Frequency')
+
+    # Row 3: dy, wz, dyaw
+    axs[2, 0].hist(targets_hist[:, 1], bins=50, color='magenta', alpha=0.7)
+    axs[2, 0].set_title('Position Derivative dy')
+    axs[2, 0].set_xlabel('dy (m/s)')
+    axs[2, 0].set_ylabel('Frequency')
+
+    axs[2, 1].hist(inputs_hist[:, 6], bins=50, color='brown', alpha=0.7)
+    axs[2, 1].set_title('Angular Velocity wz')
+    axs[2, 1].set_xlabel('wz (rad/s)')
+    axs[2, 1].set_ylabel('Frequency')
+
+    axs[2, 2].hist(targets_hist[:, 6], bins=50, color='black', alpha=0.7)
+    axs[2, 2].set_title('Yaw Derivative dyaw')
+    axs[2, 2].set_xlabel('dyaw (rad/s)')
+    axs[2, 2].set_ylabel('Frequency')
+
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.show()
+
+            
