@@ -1,235 +1,247 @@
 import numpy as np
-from typing import NamedTuple
+import matplotlib.pyplot as plt
+from scipy.spatial.transform import Rotation
+from typing import NamedTuple, List
 
 class ProcessedData(NamedTuple):
-    """Container for processed features and targets"""
-    inputs: np.ndarray  # (N, 15) network input features
-    targets: np.ndarray  # (N-1, 7) delta states (derivatives)
-    timestamps: np.ndarray  # (N-1,) aligned timestamps
+    inputs: np.ndarray    # (N, 15)
+    targets: np.ndarray   # (N, 7)
+    timestamps: np.ndarray  # (N,)
+    positions: np.ndarray   # (N, 2)
 
-def extract_features(raw_data, jump_thr: float = 0.002) -> ProcessedData:
-    """
-    Converts raw Isaac Sim data to model-ready features and targets.
-    Removes samples with abrupt steering transitions internally.
-    """
-    # 1. Remove abrupt steering transitions
-    steering = raw_data.data['target_steering'].mean(axis=1)
-    cleaned_data, _ = remove_steering_jumps(steering, raw_data.data, jump_thr=jump_thr, buffer=1)
-    n_samples = len(cleaned_data['timestamps'])
+def load_npz_file(npz_path):
+    data = np.load(npz_path, allow_pickle=True)
+    print(f"Loaded arrays: {data.files}")
+    return data
 
-    # 2. Input Feature Extraction
-    inputs = np.zeros((n_samples, 15), dtype=np.float32)
-    inputs[:, 0] = cleaned_data['target_steering'].mean(axis=1)
-    inputs[:, 1:7] = cleaned_data['root_velocity']
-    inputs[:, 7] = cleaned_data['root_pose'][:, 6]  # qw
-    inputs[:, 8:11] = cleaned_data['root_pose'][:, 3:6]  # qx, qy, qz
-    inputs[:, 11:14] = cleaned_data['root_acceleration_base_link']
-    steer_vel_left = cleaned_data['joint_velocity_front_left_wheel_steer']
-    steer_vel_right = cleaned_data['joint_velocity_front_right_wheel_steer']
-    inputs[:, 14] = (steer_vel_left + steer_vel_right) / 2.0
-
-    # 3. Delta State Computation
-    dt = np.diff(cleaned_data['timestamps'])
-    pos = cleaned_data['root_pose'][:, :2]
-    pos_deriv = np.diff(pos, axis=0) / dt[:, None]
-    steering = inputs[:, 0]
-    steer_deriv = np.diff(steering) / dt
-    accel_deriv = cleaned_data['root_acceleration_base_link'][:-1, :2]
-    ang_accel_z = cleaned_data['root_acceleration_base_link'][:-1, 2]
-    yaw = quaternion_to_yaw(inputs[:, 7:11])
-    yaw_deriv = np.diff(yaw) / dt
-
-    targets = np.column_stack([
-        pos_deriv,        # dx, dy
-        steer_deriv,      # d_steering
-        accel_deriv,      # dvx, dvy
-        ang_accel_z,      # dwz
-        yaw_deriv         # dyaw
-    ])
-    inputs = inputs[:-1]
-    timestamps = cleaned_data['timestamps'][:-1]
-    return ProcessedData(inputs, targets, timestamps)
-def remove_steering_jumps(steering: np.ndarray, data_arrays: dict, jump_thr: float = 0.002, buffer: int = 1):
-    """
-    Remove samples where the change in steering angle exceeds jump_thr.
+def extract_features(raw_data):
+    """Create inputs and targets from raw data, grouped by robot ID"""
+    robot_ids = raw_data['robot_id'].flatten()
+    unique_ids = np.unique(robot_ids)
     
-    Args:
-        steering: 1D numpy array of steering angles (shape: N,)
-        data_arrays: Dictionary of arrays (all shape N or (N, ...)) to be filtered.
-        jump_thr: Threshold for detecting abrupt steering changes.
-        buffer: Number of samples before and after each jump to remove.
+    all_inputs = []
+    all_targets = []
+    all_timestamps = []
+    all_positions = []
     
-    Returns:
-        filtered_arrays: Dictionary of arrays with abrupt transitions removed.
-        kept_mask: Boolean mask indicating which samples are kept.
-    """
-    # Find indices where steering changes abruptly
-    diffs = np.abs(np.diff(steering))
-    boundaries = np.where(diffs > jump_thr)[0]
+    for rid in unique_ids:
+        mask = (robot_ids == rid)
+        ts = raw_data['timestamps'][mask].flatten()
+        positions = raw_data['root_pose'][mask, :2]
+        steering = raw_data['target_steering'][mask].mean(axis=1)
+        
+        # Assemble inputs for this robot (15 dimensions)
+        X = np.empty((len(ts), 15), np.float32)
+        X[:, 0:6] = raw_data['root_velocity'][mask]
+        q = raw_data['root_pose'][mask, 3:7]
+        X[:, 6:10] = q[:, [3, 0, 1, 2]]  # qw, qx, qy, qz
+        X[:, 10:13] = raw_data['root_acceleration_base_link'][mask]
+        X[:, 13] = raw_data['target_velocity'][mask, 0]
+        X[:, 14] = steering
+        
+        # Compute derivatives (targets) for this robot
+        dt = np.diff(ts)
+        if len(dt) == 0:  # Skip if only one data point
+            continue
+            
+        dxdy = np.diff(positions, axis=0) / dt[:, None]
+        dsteer = np.diff(X[:, 14]) / dt
+        dv = np.diff(X[:, 0:2], axis=0) / dt[:, None]
+        wz = raw_data['root_velocity'][mask, 5]
+        dwz = np.diff(wz) / dt
+        
+        # Use angular velocity for yaw derivative
+        dyaw = wz[:-1]  # Current angular velocity as yaw derivative
+        
+        Y = np.column_stack([dxdy, dsteer, dv, dwz, dyaw])
+        
+        # Only keep states where we have next state (N-1)
+        all_inputs.append(X[:-1])
+        all_targets.append(Y)
+        all_timestamps.append(ts[:-1])
+        all_positions.append(positions[:-1])
     
-    # Build mask: start with all True
-    mask = np.ones_like(steering, dtype=bool)
-    for idx in boundaries:
-        for offset in range(-buffer, buffer + 1):
-            j = idx + offset
-            if 0 <= j < len(mask):
-                mask[j] = False
+    # Combine all robots' data
+    return ProcessedData(
+        inputs=np.vstack(all_inputs),
+        targets=np.vstack(all_targets),
+        timestamps=np.concatenate(all_timestamps),
+        positions=np.vstack(all_positions)
+    )
+
+def filter_invalid_transitions(processed, error_threshold=0.005):
+    """Filter out data points with integration error > threshold"""
+    print("\nFiltering invalid transitions:")
+    labels = ["dx", "dy", "dsteer", "dvx", "dvy", "dwz", "dyaw"]
+    n = min(len(processed.targets), len(processed.timestamps) - 1)
+    valid_mask = np.ones(n, dtype=bool)
+    all_predicted = []
+    all_actual = []
+    count = 0
     
-    # Apply mask to all arrays
-    filtered_arrays = {k: v[mask] for k, v in data_arrays.items()}
-    return filtered_arrays, mask
+    for i in range(n):
+        dt = processed.timestamps[i+1] - processed.timestamps[i]
+        
+        # Current state
+        current_state = processed.inputs[i]
+        current_pos = processed.positions[i]
+        current_steer = current_state[14]
+        
+        # Compute predicted next state
+        integrated_pos = current_pos + processed.targets[i, 0:2] * dt
+        integrated_steer = current_steer + processed.targets[i, 2] * dt
+        integrated_vx = current_state[0] + processed.targets[i, 3] * dt
+        integrated_vy = current_state[1] + processed.targets[i, 4] * dt
+        integrated_wz = current_state[5] + processed.targets[i, 5] * dt
+        integrated_yaw = Rotation.from_quat(current_state[6:10]).as_euler('zyx')[0] + processed.targets[i, 6] * dt
+        
+        # Actual next state
+        next_state = processed.inputs[i+1]
+        actual_pos = processed.positions[i+1]
+        actual_steer = next_state[14]
+        actual_vx, actual_vy, actual_wz = next_state[0], next_state[1], next_state[5]
+        actual_yaw = Rotation.from_quat(next_state[6:10]).as_euler('zyx')[0]
+        
+        # Store for plotting
+        predicted_state = [integrated_pos[0], integrated_pos[1], integrated_steer,
+                          integrated_vx, integrated_vy, integrated_wz, integrated_yaw]
+        actual_state = [actual_pos[0], actual_pos[1], actual_steer,
+                       actual_vx, actual_vy, actual_wz, actual_yaw]
+        
+        all_predicted.append(predicted_state)
+        all_actual.append(actual_state)
+        
+        # Calculate errors
+        errors = [
+            abs(integrated_pos[0] - actual_pos[0]),
+            abs(integrated_pos[1] - actual_pos[1]),
+            abs(integrated_steer - actual_steer),
+            abs(integrated_vx - actual_vx),
+            abs(integrated_vy - actual_vy),
+            abs(integrated_wz - actual_wz),
+            abs(integrated_yaw - actual_yaw)
+        ]
+        
+        # Check if any error exceeds threshold
+        if any(err > error_threshold for err in errors):
+            valid_mask[i] = False
+            count += 1
+    
+    print(f"Removed {count} data points with errors > {error_threshold}")
+    
+    # Create filtered dataset
+    current_inputs = processed.inputs[:n]
+    current_positions = processed.positions[:n]
+    current_timestamps = processed.timestamps[:n]
+    
+    filtered_inputs = current_inputs[valid_mask]
+    filtered_targets = processed.targets[:n][valid_mask]
+    filtered_timestamps = current_timestamps[valid_mask]
+    filtered_positions = current_positions[valid_mask]
+    
+    # Convert to arrays for plotting
+    predicted_array = np.array(all_predicted)
+    actual_array = np.array(all_actual)
+    
+    # Filter prediction arrays
+    filtered_predicted = predicted_array[valid_mask]
+    filtered_actual = actual_array[valid_mask]
+    
+    return ProcessedData(
+        filtered_inputs,
+        filtered_targets,
+        filtered_timestamps,
+        filtered_positions, # Steering angles from filtered inputs
+    ), filtered_predicted, filtered_actual
 
 
-def quaternion_to_yaw(quaternions: np.ndarray) -> np.ndarray:
-    """Convert quaternion array to yaw angles (radians)"""
-    qw, qx, qy, qz = quaternions.T
-    
-    # Normalize quaternions
-    norm = np.sqrt(qw**2 + qx**2 + qy**2 + qz**2)
-    qw /= norm
-    qx /= norm
-    qy /= norm
-    qz /= norm
-    
-    # Yaw calculation
-    t3 = 2.0 * (qw * qz + qx * qy)
-    t4 = 1.0 - 2.0 * (qy**2 + qz**2)
-    return np.arctan2(t3, t4)
 
+def plot_delta_comparison(predicted, actual, labels):
+    """Plot integrated vs actual for all delta states"""
+    plt.figure(figsize=(15, 10))
+    for i in range(7):
+        plt.subplot(4, 2, i+1)
+        plt.plot(predicted[:, i], 'b-', label='Integrated')
+        plt.plot(actual[:, i], 'r--', label='Actual')
+        plt.title(f'State: {labels[i]}')
+        plt.xlabel('Time Step')
+        plt.ylabel('Value')
+        plt.legend()
+    plt.tight_layout()
+    plt.savefig('delta_state_comparison.png')
+    plt.show()
 
 if __name__ == "__main__":
-    from data_loader import load_and_validate
+    # Load and process data
+    raw_data = load_npz_file("../data_record_20deg.npz")
+    processed = extract_features(raw_data)
+    filtered, predicted, actual  = filter_invalid_transitions(processed)
+    # filtered = remove_steering_jumps(processed)
     
-    # Load test data
-    raw = load_and_validate("../data_record_20deg.npz")
+    # Print sample data
+    print("\n=== First 2 Input Samples ===")
+    input_labels = ["vx","vy","vz","wx","wy","wz","qw","qx","qy","qz","ax","ay","az","v_cmd","steer_cmd"]
+    for i in range(2):
+        print(f"\nSample {i}:")
+        for j, label in enumerate(input_labels):
+            print(f"  {label}: {filtered.inputs[i, j]:.6f}")
     
-    # Process features
-    processed = extract_features(raw)
+    print("\n=== First Target Sample ===")
+    target_labels = ["dx","dy","dsteer","dvx","dvy","dwz","dyaw"]
+    for j, label in enumerate(target_labels):
+        print(f"  {label}: {filtered.targets[0, j]:.6f}")
     
-    print("\nFeature Engineering Validation:")
-    print(f"Inputs shape: {processed.inputs.shape} (expect (124999, 15))")
-    print(f"Targets shape: {processed.targets.shape} (expect (124999, 7))")
-    print(f"Timestamp shape: {processed.timestamps.shape}")
+    # Validate integration
+
     
-    # Verify first sample
-    print("\nFirst input sample:", processed.inputs[0])
-    print("First target sample:", processed.targets[0])
-    import matplotlib.pyplot as plt
-    import numpy as np
+    print(f"\nNumber of input samples: {len(filtered.inputs)}")
+    print(f"Number of target samples: {len(filtered.targets)}")
+    
+    
+    
+    
+    # Plot comparison of all delta states
+    plot_delta_comparison(predicted, actual, ["Pos X", "Pos Y", "Steering", "Vel X", "Vel Y", "Ang Vel Z", "Yaw"])
+    
+    # Plot histograms
+    plt.figure(figsize=(12, 8))
+    features = {
+        'Velocity X': filtered.inputs[:, 0],
+        'Velocity Y': filtered.inputs[:, 1],
+        'Commanded Velocity': filtered.inputs[:, 13],
+        'Commanded Steering': filtered.inputs[:, 14]
+    }
 
-    # Use your actual processed data here:
-    # inputs = processed.inputs
-    # targets = processed.targets
-
-    # For demonstration, here's how to select the first 1000 samples:
-    N = 125000
-    inputs_plot = processed.inputs[:N]  # Access .inputs from ProcessedData
-    targets_plot = processed.targets[:N]
-
-    fig, axs = plt.subplots(3, 2, figsize=(12, 10))
-
-    # Steering anglef
-    axs[0, 0].plot(inputs_plot[:, 0])
-    axs[0, 0].set_title('Steering Angle over Time')
-    axs[0, 0].set_xlabel('Sample')
-    axs[0, 0].set_ylabel('Steering Angle (rad)')
-
-    # Vehicle linear velocities vx, vy
-    axs[0, 1].plot(inputs_plot[:, 1], label='vx')
-    axs[0, 1].plot(inputs_plot[:, 2], label='vy')
-    axs[0, 1].set_title('Vehicle Linear Velocities')
-    axs[0, 1].set_xlabel('Sample')
-    axs[0, 1].set_ylabel('Velocity (m/s)')
-    axs[0, 1].legend()
-
-    # Quaternion components
-    axs[1, 0].plot(inputs_plot[:, 7], label='qw')
-    axs[1, 0].plot(inputs_plot[:, 8], label='qx')
-    axs[1, 0].plot(inputs_plot[:, 9], label='qy')
-    axs[1, 0].plot(inputs_plot[:, 10], label='qz')
-    axs[1, 0].set_title('Quaternion Components')
-    axs[1, 0].set_xlabel('Sample')
-    axs[1, 0].set_ylabel('Quaternion Value')
-    axs[1, 0].legend()
-
-    # Position derivatives dx, dy
-    axs[1, 1].plot(targets_plot[:, 0], label='dx')
-    axs[1, 1].plot(targets_plot[:, 1], label='dy')
-    axs[1, 1].set_title('Position Derivatives')
-    axs[1, 1].set_xlabel('Sample')
-    axs[1, 1].set_ylabel('Derivative (m/s)')
-    axs[1, 1].legend()
-
-    # Yaw derivative dyaw
-    axs[2, 0].plot(targets_plot[:, 6])
-    axs[2, 0].set_title('Yaw Derivative (dyaw)')
-    axs[2, 0].set_xlabel('Sample')
-    axs[2, 0].set_ylabel('Yaw Rate (rad/s)')
-
-    # Hide unused subplot
-    axs[2, 1].axis('off')
-
+    for i, (title, data) in enumerate(features.items()):
+        plt.subplot(2, 2, i+1)
+        plt.hist(data, bins=50, alpha=0.7)
+        plt.title(title)
+        plt.xlabel('Value')
+        plt.ylabel('Frequency')
     plt.tight_layout()
+    plt.savefig('feature_histograms.png')
+    plt.show()
+    
+    # Plot trajectory
+    plt.figure(figsize=(10, 8))
+    plt.plot(filtered.positions[:, 0], filtered.positions[:, 1], 'b-', label='Actual Path')
+    plt.title("Vehicle Trajectory")
+    plt.xlabel("X Position (m)")
+    plt.ylabel("Y Position (m)")
+    plt.axis('equal')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.savefig('vehicle_trajectory.png')
     plt.show()
 
-    max_hist = min(100000, processed.inputs.shape[0], processed.targets.shape[0])
-    inputs_hist = processed.inputs[:max_hist]
-    targets_hist = processed.targets[:max_hist]
 
-    import matplotlib.pyplot as plt
-
-    fig, axs = plt.subplots(3, 3, figsize=(16, 12))
-    fig.suptitle('Histograms of Control Inputs and State Features', fontsize=16)
-
-    # Row 1: Steering angle, steering speed, vx
-    axs[0, 0].hist(inputs_hist[:, 0], bins=50, color='blue', alpha=0.7)
-    axs[0, 0].set_title('Steering Angle')
-    axs[0, 0].set_xlabel('Steering Angle (rad)')
-    axs[0, 0].set_ylabel('Frequency')
-
-    axs[0, 1].hist(inputs_hist[:, 14], bins=50, color='green', alpha=0.7)
-    axs[0, 1].set_title('Steering Speed')
-    axs[0, 1].set_xlabel('Steering Speed (rad/s)')
-    axs[0, 1].set_ylabel('Frequency')
-
-    axs[0, 2].hist(inputs_hist[:, 1], bins=50, color='red', alpha=0.7)
-    axs[0, 2].set_title('Linear Velocity vx')
-    axs[0, 2].set_xlabel('vx (m/s)')
-    axs[0, 2].set_ylabel('Frequency')
-
-    # Row 2: vy, vz, dx
-    axs[1, 0].hist(inputs_hist[:, 2], bins=50, color='orange', alpha=0.7)
-    axs[1, 0].set_title('Linear Velocity vy')
-    axs[1, 0].set_xlabel('vy (m/s)')
-    axs[1, 0].set_ylabel('Frequency')
-
-    axs[1, 1].hist(inputs_hist[:, 3], bins=50, color='purple', alpha=0.7)
-    axs[1, 1].set_title('Linear Velocity vz')
-    axs[1, 1].set_xlabel('vz (m/s)')
-    axs[1, 1].set_ylabel('Frequency')
-
-    axs[1, 2].hist(targets_hist[:, 0], bins=50, color='cyan', alpha=0.7)
-    axs[1, 2].set_title('Position Derivative dx')
-    axs[1, 2].set_xlabel('dx (m/s)')
-    axs[1, 2].set_ylabel('Frequency')
-
-    # Row 3: dy, wz, dyaw
-    axs[2, 0].hist(targets_hist[:, 1], bins=50, color='magenta', alpha=0.7)
-    axs[2, 0].set_title('Position Derivative dy')
-    axs[2, 0].set_xlabel('dy (m/s)')
-    axs[2, 0].set_ylabel('Frequency')
-
-    axs[2, 1].hist(inputs_hist[:, 6], bins=50, color='brown', alpha=0.7)
-    axs[2, 1].set_title('Angular Velocity wz')
-    axs[2, 1].set_xlabel('wz (rad/s)')
-    axs[2, 1].set_ylabel('Frequency')
-
-    axs[2, 2].hist(targets_hist[:, 6], bins=50, color='black', alpha=0.7)
-    axs[2, 2].set_title('Yaw Derivative dyaw')
-    axs[2, 2].set_xlabel('dyaw (rad/s)')
-    axs[2, 2].set_ylabel('Frequency')
-
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    # Plot steering angles over time
+    plt.figure(figsize=(10, 4))
+    plt.plot(filtered.timestamps, filtered.steering_angles, label='Steering Angle')
+    plt.title("Steering Angle Over Time")
+    plt.xlabel("Timestamp (s)")
+    plt.ylabel("Steering Angle (rad)")
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.savefig('steering_angle_over_time.png')
     plt.show()
-
-            
