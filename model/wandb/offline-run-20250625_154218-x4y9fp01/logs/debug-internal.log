@@ -1,0 +1,8 @@
+{"time":"2025-06-25T15:42:18.980759609-04:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/home/saichand/ros2_ws/src/dnmc_modl/model/wandb/offline-run-20250625_154218-x4y9fp01/logs/debug-core.log"}
+{"time":"2025-06-25T15:42:19.08407797-04:00","level":"WARN","msg":"GraphQL client is nil, skipping feature loading"}
+{"time":"2025-06-25T15:42:19.084144375-04:00","level":"INFO","msg":"stream: created new stream","id":"x4y9fp01"}
+{"time":"2025-06-25T15:42:19.084154213-04:00","level":"INFO","msg":"stream: started","id":"x4y9fp01"}
+{"time":"2025-06-25T15:42:19.084178679-04:00","level":"INFO","msg":"writer: Do: started","stream_id":"x4y9fp01"}
+{"time":"2025-06-25T15:42:19.084180482-04:00","level":"INFO","msg":"handler: started","stream_id":"x4y9fp01"}
+{"time":"2025-06-25T15:42:19.084203195-04:00","level":"INFO","msg":"sender: started","stream_id":"x4y9fp01"}
+{"time":"2025-06-25T15:42:19.086334503-04:00","level":"INFO","msg":"Starting system monitor"}

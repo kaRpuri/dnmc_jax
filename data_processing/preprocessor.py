@@ -98,12 +98,12 @@ def temporal_split(
 
 
 if __name__ == "__main__":
-    from data_loader import load_and_validate
-    from feature_extractor import extract_features
+    
+    from feature_extractor import load_npz_file, extract_features
     from preprocessor import Preprocessor, temporal_split, NormalizedData
     
     # 1. Load and process raw data
-    raw = load_and_validate("../data_record_20deg.npz")
+    raw = load_npz_file("../data_record_20deg.npz")
     processed = extract_features(raw)
     
     # 2. Split data

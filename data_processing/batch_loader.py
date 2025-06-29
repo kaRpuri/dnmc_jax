@@ -46,6 +46,9 @@ class DataLoader:
     def __len__(self):
         "Returns the total number of batches per epoch."  
         return (len(self.inputs) + self.batch_size - 1) // self.batch_size  # [1]
+    
+
+
 
 
 

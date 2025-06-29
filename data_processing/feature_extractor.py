@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation
 from typing import NamedTuple, List
+import os
+import sys
+
 
 class ProcessedData(NamedTuple):
     inputs: np.ndarray    # (N, 15)
@@ -10,8 +13,23 @@ class ProcessedData(NamedTuple):
     positions: np.ndarray   # (N, 2)
 
 def load_npz_file(npz_path):
+    if not os.path.isfile(npz_path):
+        print(f"Error: file not found: {npz_path}", file=sys.stderr)
+        return
+    # Load the archive (this gives you a dict‐like object)
     data = np.load(npz_path, allow_pickle=True)
-    print(f"Loaded arrays: {data.files}")
+    keys = data.files
+
+    if not keys:
+        print("No arrays found in the .npz file.")
+        return
+
+    # print the keys / data
+    print(f"Found {len(keys)} array(s) in '{npz_path}':")
+    for key in keys:
+        arr = data[key]
+        print(f"  --> {key}  (shape={arr.shape}, dtype={arr.dtype})")
+
     return data
 
 def extract_features(raw_data):
@@ -235,13 +253,3 @@ if __name__ == "__main__":
     plt.show()
 
 
-    # Plot steering angles over time
-    plt.figure(figsize=(10, 4))
-    plt.plot(filtered.timestamps, filtered.steering_angles, label='Steering Angle')
-    plt.title("Steering Angle Over Time")
-    plt.xlabel("Timestamp (s)")
-    plt.ylabel("Steering Angle (rad)")
-    plt.grid(True, alpha=0.3)
-    plt.legend()
-    plt.savefig('steering_angle_over_time.png')
-    plt.show()

@@ -7,14 +7,14 @@ class DynamicsModel(nn.Module):
     """
     Multi-layer perceptron for vehicle dynamics delta state prediction.
     
-    Architecture: [22, 32, 64, 128, 128, 64, 32, 7]
-    - Input: 22D (15 current features + 7 previous delta states)
+    Architecture: [15, 32, 64, 128, 128, 64, 32, 7]
+    - Input: 15D (current features only)
     - Output: 7D delta states [dx, dy, d_steering, dvx, dvy, dwz, dyaw]
     """
     
     @nn.compact
     def __call__(self, x):
-        # Layer 1: 22 -> 32
+        # Layer 1: 15 -> 32
         x = nn.Dense(32)(x)
         x = nn.relu(x)
         
@@ -43,18 +43,17 @@ class DynamicsModel(nn.Module):
         
         return x
 
-def prepare_model_inputs(current_features, previous_delta_states):
+def prepare_model_inputs(current_features):
     """
-    Combine current features (15D) with previous delta states (7D) for model input.
+    Use only current features (15D) for model input.
     
     Args:
         current_features: (batch_size, 15) current vehicle state features
-        previous_delta_states: (batch_size, 7) previous delta state values
         
     Returns:
-        model_inputs: (batch_size, 22) concatenated input for the model
+        model_inputs: (batch_size, 15) input for the model
     """
-    return jnp.concatenate([current_features, previous_delta_states], axis=1)
+    return current_features
 
 def create_model():
     """
@@ -88,8 +87,8 @@ if __name__ == "__main__":
     model = create_model()
     key   = jax.random.PRNGKey(42)
 
-    # 2. Create dummy input batch (batch_size=4, input_dim=22)
-    dummy_inputs = jax.random.normal(key, (4, 22))
+    # 2. Create dummy input batch (batch_size=4, input_dim=15)
+    dummy_inputs = jax.random.normal(key, (4, 15))
     
     # 3. Initialize model parameters
     init_vars = model.init(key, dummy_inputs)
