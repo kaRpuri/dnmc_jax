@@ -62,37 +62,62 @@ def eval_step(state, batch_inputs, batch_targets, beta1=1.0, beta2=0.1, beta3=1e
     )
     return loss_val, metrics
 
+def r2_score(y_true, y_pred):
+    """Compute R^2 (coefficient of determination) for regression."""
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - np.mean(y_true, axis=0)) ** 2)
+    return 1 - ss_res / ss_tot if ss_tot != 0 else 0.0
+
 def train_epoch(state, train_loader, beta1, beta2, beta3):
     """Train for one epoch."""
     epoch_losses = []
     epoch_metrics = {'l2_loss': [], 'linf_loss': [], 'l2_reg': []}
+    all_targets = []
+    all_preds = []
     for batch_inputs, batch_targets in train_loader:
         model_inputs = prepare_model_inputs(batch_inputs)  # Only current features (15D)
         state, loss_val, metrics = train_step(
             state, model_inputs, batch_targets, beta1, beta2, beta3
         )
+        preds = np.array(state.apply_fn({'params': state.params}, model_inputs))
         epoch_losses.append(loss_val)
         for key in epoch_metrics:
             epoch_metrics[key].append(metrics[key])
+        all_targets.append(np.array(batch_targets))
+        all_preds.append(preds)
     avg_loss = jnp.mean(jnp.array(epoch_losses))
     avg_metrics = {k: jnp.mean(jnp.array(v)) for k, v in epoch_metrics.items()}
-    return state, avg_loss, avg_metrics
+    # Concatenate all batches for R^2
+    all_targets = np.concatenate(all_targets, axis=0)
+    all_preds = np.concatenate(all_preds, axis=0)
+    r2 = r2_score(all_targets, all_preds)
+    return state, avg_loss, avg_metrics, r2
 
 def validate_epoch(state, val_loader, beta1, beta2, beta3):
     """Validate for one epoch."""
     val_losses = []
     val_metrics = {'l2_loss': [], 'linf_loss': [], 'l2_reg': []}
+    all_targets = []
+    all_preds = []
     for batch_inputs, batch_targets in val_loader:
         model_inputs = prepare_model_inputs(batch_inputs)
         loss_val, metrics = eval_step(
             state, model_inputs, batch_targets, beta1, beta2, beta3
         )
+        preds = np.array(state.apply_fn({'params': state.params}, model_inputs))
         val_losses.append(loss_val)
         for key in val_metrics:
             val_metrics[key].append(metrics[key])
+        all_targets.append(np.array(batch_targets))
+        all_preds.append(preds)
     avg_loss = jnp.mean(jnp.array(val_losses))
     avg_metrics = {k: jnp.mean(jnp.array(v)) for k, v in val_metrics.items()}
-    return avg_loss, avg_metrics
+    all_targets = np.concatenate(all_targets, axis=0)
+    all_preds = np.concatenate(all_preds, axis=0)
+    r2 = r2_score(all_targets, all_preds)
+    return avg_loss, avg_metrics, r2
 
 def train_model(train_data, val_data, config):
     """Main training loop."""
@@ -123,10 +148,10 @@ def train_model(train_data, val_data, config):
 
     for epoch in range(epochs):
         start_time = time.time()
-        state, train_loss, train_metrics = train_epoch(
+        state, train_loss, train_metrics, train_r2 = train_epoch(
             state, train_loader, beta1, beta2, beta3
         )
-        val_loss, val_metrics = validate_epoch(
+        val_loss, val_metrics, val_r2 = validate_epoch(
             state, val_loader, beta1, beta2, beta3
         )
         epoch_time = time.time() - start_time
@@ -142,6 +167,8 @@ def train_model(train_data, val_data, config):
             'val/linf_loss': float(val_metrics['linf_loss']),
             'train/l2_reg': float(train_metrics['l2_reg']),
             'val/l2_reg': float(val_metrics['l2_reg']),
+            'train/r2': float(train_r2),
+            'val/r2': float(val_r2),
             'epoch_time': epoch_time
         }, step=epoch)
 
@@ -149,6 +176,7 @@ def train_model(train_data, val_data, config):
             print(f"Epoch {epoch:3d} | "
                   f"Train Loss: {train_loss:.6f} | "
                   f"Val Loss: {val_loss:.6f} | "
+                  f"Train R2: {train_r2:.4f} | Val R2: {val_r2:.4f} | "
                   f"Time: {epoch_time:.1f}s")
             print(f"         | "
                   f"Train L2: {train_metrics['l2_loss']:.6f} | "

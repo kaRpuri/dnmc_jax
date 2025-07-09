@@ -1,0 +1,69 @@
+Starting training for 100 epochs...
+Train batches: 137, Val batches: 30
+Epoch   0 | Train Loss: 6.130764 | Val Loss: 4.138249 | Time: 11.5s
+         | Train L2: 2.890476 | Val L2: 1.714191
+         | New best model saved! Val loss: 4.138249
+         | New best model saved! Val loss: 3.269432
+         | New best model saved! Val loss: 2.883638
+         | New best model saved! Val loss: 2.641581
+         | New best model saved! Val loss: 2.483612
+         | New best model saved! Val loss: 2.371087
+         | New best model saved! Val loss: 2.289121
+         | New best model saved! Val loss: 2.222095
+         | New best model saved! Val loss: 2.191630
+         | New best model saved! Val loss: 2.166326
+Epoch  10 | Train Loss: 2.116685 | Val Loss: 2.143731 | Time: 0.1s
+         | Train L2: 1.334443 | Val L2: 1.373295
+         | New best model saved! Val loss: 2.143731
+         | New best model saved! Val loss: 2.108878
+         | New best model saved! Val loss: 2.085458
+         | New best model saved! Val loss: 2.078977
+         | New best model saved! Val loss: 2.063698
+         | New best model saved! Val loss: 2.040794
+         | New best model saved! Val loss: 2.030532
+         | New best model saved! Val loss: 2.012340
+Epoch  20 | Train Loss: 1.981241 | Val Loss: 2.011508 | Time: 0.1s
+         | Train L2: 1.285138 | Val L2: 1.315939
+         | New best model saved! Val loss: 2.011508
+         | New best model saved! Val loss: 1.988651
+         | New best model saved! Val loss: 1.980552
+         | New best model saved! Val loss: 1.969893
+Epoch  30 | Train Loss: 1.937679 | Val Loss: 1.984943 | Time: 0.1s
+         | Train L2: 1.245402 | Val L2: 1.290034
+         | New best model saved! Val loss: 1.958781
+         | New best model saved! Val loss: 1.947003
+         | New best model saved! Val loss: 1.941087
+Epoch  40 | Train Loss: 1.911411 | Val Loss: 1.938615 | Time: 0.1s
+         | Train L2: 1.213959 | Val L2: 1.240027
+         | New best model saved! Val loss: 1.938615
+         | New best model saved! Val loss: 1.935784
+         | New best model saved! Val loss: 1.934271
+         | New best model saved! Val loss: 1.931693
+Epoch  50 | Train Loss: 1.889663 | Val Loss: 1.932611 | Time: 0.1s
+         | Train L2: 1.186246 | Val L2: 1.228305
+         | New best model saved! Val loss: 1.923762
+         | New best model saved! Val loss: 1.921020
+         | New best model saved! Val loss: 1.920785
+         | New best model saved! Val loss: 1.915133
+         | New best model saved! Val loss: 1.913389
+Epoch  60 | Train Loss: 1.875657 | Val Loss: 1.924688 | Time: 0.1s
+         | Train L2: 1.168691 | Val L2: 1.216183
+         | New best model saved! Val loss: 1.913138
+         | New best model saved! Val loss: 1.910152
+         | New best model saved! Val loss: 1.909078
+Epoch  70 | Train Loss: 1.869295 | Val Loss: 1.913582 | Time: 0.1s
+         | Train L2: 1.159512 | Val L2: 1.203105
+         | New best model saved! Val loss: 1.907734
+         | New best model saved! Val loss: 1.906618
+Epoch  80 | Train Loss: 1.866303 | Val Loss: 1.908054 | Time: 0.1s
+         | Train L2: 1.154519 | Val L2: 1.196011
+         | New best model saved! Val loss: 1.905837
+         | New best model saved! Val loss: 1.904642
+Epoch  90 | Train Loss: 1.864958 | Val Loss: 1.911462 | Time: 0.1s
+         | Train L2: 1.151367 | Val L2: 1.196608
+         | New best model saved! Val loss: 1.903197
+Epoch  99 | Train Loss: 1.862892 | Val Loss: 1.905810 | Time: 0.1s
+         | Train L2: 1.147273 | Val L2: 1.189358
+
+Training completed!
+Best validation loss: 1.903197

@@ -98,17 +98,22 @@ def temporal_split(
 
 
 if __name__ == "__main__":
-    
     from feature_extractor import load_npz_file, extract_features
     from preprocessor import Preprocessor, temporal_split, NormalizedData
-    
+
     # 1. Load and process raw data
-    raw = load_npz_file("../data_record_20deg.npz")
+    raw = load_npz_file("../data_record1.npz")
     processed = extract_features(raw)
-    
+
+    # 1.5. Shuffle data while keeping input-output pairs
+    rng = np.random.default_rng(seed=42)  # For reproducibility
+    indices = rng.permutation(len(processed.inputs))
+    shuffled_inputs = processed.inputs[indices]
+    shuffled_targets = processed.targets[indices]
+
     # 2. Split data
     (train_in, train_out), (val_in, val_out), (test_in, test_out) = temporal_split(
-        processed.inputs, processed.targets
+        shuffled_inputs, shuffled_targets
     )
     
     # 3. Initialize and fit preprocessor

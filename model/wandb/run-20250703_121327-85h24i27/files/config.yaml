@@ -1,0 +1,48 @@
+_wandb:
+    value:
+        cli_version: 0.20.1
+        m: []
+        python_version: 3.10.12
+        t:
+            "1":
+                - 12
+                - 45
+            "2":
+                - 12
+                - 45
+            "3":
+                - 2
+                - 16
+                - 55
+                - 61
+                - 62
+            "4": 3.10.12
+            "5": 0.20.1
+            "12": 0.20.1
+            "13": linux-x86_64
+batch_size:
+    value: 256
+beta1:
+    value: 0.1
+beta2:
+    value: 0.1
+beta3:
+    value: 0.2
+entity:
+    value: null
+epochs:
+    value: 100
+learning_rate:
+    value: 0.001
+project:
+    value: vehicle-dynamics
+run_name:
+    value: null
+save_dir:
+    value: ./checkpoints
+seed:
+    value: 42
+train_data_path:
+    value: ../data_processing/processed/train.npz
+val_data_path:
+    value: ../data_processing/processed/val.npz

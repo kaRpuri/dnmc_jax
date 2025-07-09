@@ -32,8 +32,22 @@ def load_npz_file(npz_path):
 
     return data
 
-def extract_features(raw_data):
+def extract_features(raw_data, control_data):
     """Create inputs and targets from raw data, grouped by robot ID"""
+    # Load the raw control data file for actual control inputs
+    print("[INFO]: Loading raw control data for control inputs...")
+    try:
+        raw_control = np.load(control_data)
+        print(f"Raw control data loaded with shapes:")
+        print(f"  velocity: {raw_control['velocity'].shape}")
+        print(f"  steering: {raw_control['steering'].shape}")
+        print(f"  timestamps: {raw_control['timestamps'].shape}")
+        use_raw_control = True
+    except Exception as e:
+        print(f"[WARNING]: Failed to load raw_control_data.npz: {e}")
+        print("[WARNING]: Falling back to original data")
+        use_raw_control = False
+    
     robot_ids = raw_data['robot_id'].flatten()
     unique_ids = np.unique(robot_ids)
     
@@ -46,7 +60,9 @@ def extract_features(raw_data):
         mask = (robot_ids == rid)
         ts = raw_data['timestamps'][mask].flatten()
         positions = raw_data['root_pose'][mask, :2]
-        steering = raw_data['target_steering'][mask].mean(axis=1)
+        
+        # Original steering from the dataset (we'll replace this)
+        orig_steering = raw_data['target_steering'][mask].mean(axis=1)
         
         # Assemble inputs for this robot (15 dimensions)
         X = np.empty((len(ts), 15), np.float32)
@@ -54,14 +70,53 @@ def extract_features(raw_data):
         q = raw_data['root_pose'][mask, 3:7]
         X[:, 6:10] = q[:, [3, 0, 1, 2]]  # qw, qx, qy, qz
         X[:, 10:13] = raw_data['root_acceleration_base_link'][mask]
-        X[:, 13] = raw_data['target_velocity'][mask, 0]
-        X[:, 14] = steering
+        
+        # Replace control inputs with raw control data if available
+        if use_raw_control:
+            from scipy.interpolate import interp1d
+            
+            # Timestamps from raw control data
+            raw_ts = raw_control['timestamps']
+            
+            if rid < raw_control['velocity'].shape[1]:
+                # Create interpolation functions for velocity and steering
+                vel_interp = interp1d(
+                    raw_ts, 
+                    raw_control['velocity'][:, rid, 0],
+                    bounds_error=False, 
+                    fill_value=(raw_control['velocity'][0, rid, 0], raw_control['velocity'][-1, rid, 0])
+                )
+                
+                steer_interp = interp1d(
+                    raw_ts, 
+                    raw_control['steering'][:, rid, 0],
+                    bounds_error=False, 
+                    fill_value=(raw_control['steering'][0, rid, 0], raw_control['steering'][-1, rid, 0])
+                )
+                
+                # Get interpolated values at our timestamps
+                X[:, 13] = vel_interp(ts)
+                X[:, 14] = steer_interp(ts)
+                
+                print(f"Robot {rid}: Using raw control data")
+                print(f"  - Original velocity range: [{raw_data['target_velocity'][mask, 0].min():.3f}, {raw_data['target_velocity'][mask, 0].max():.3f}]")
+                print(f"  - Raw velocity range: [{X[:, 13].min():.3f}, {X[:, 13].max():.3f}]")
+                print(f"  - Original steering range: [{orig_steering.min():.3f}, {orig_steering.max():.3f}]")
+                print(f"  - Raw steering range: [{X[:, 14].min():.3f}, {X[:, 14].max():.3f}]")
+            else:
+                print(f"Robot {rid}: ID out of range in raw control data, using original data")
+                X[:, 13] = raw_data['target_velocity'][mask, 0]
+                X[:, 14] = orig_steering
+        else:
+            # Use original data
+            X[:, 13] = raw_data['target_velocity'][mask, 0]
+            X[:, 14] = orig_steering
         
         # Compute derivatives (targets) for this robot
         dt = np.diff(ts)
         if len(dt) == 0:  # Skip if only one data point
             continue
-            
+        
         dxdy = np.diff(positions, axis=0) / dt[:, None]
         dsteer = np.diff(X[:, 14]) / dt
         dv = np.diff(X[:, 0:2], axis=0) / dt[:, None]
@@ -178,7 +233,7 @@ def plot_delta_comparison(predicted, actual, labels):
     """Plot integrated vs actual for all delta states"""
     plt.figure(figsize=(15, 10))
     for i in range(7):
-        plt.subplot(4, 2, i+1)
+        plt.subplot(4, 2, i+1) 
         plt.plot(predicted[:, i], 'b-', label='Integrated')
         plt.plot(actual[:, i], 'r--', label='Actual')
         plt.title(f'State: {labels[i]}')
@@ -189,23 +244,123 @@ def plot_delta_comparison(predicted, actual, labels):
     plt.savefig('delta_state_comparison.png')
     plt.show()
 
+def plot_vehicle_states(filtered):
+    """Plot key vehicle states over time"""
+    fig, axes = plt.subplots(3, 2, figsize=(15, 12))
+    fig.suptitle('Vehicle State Analysis')
+    
+    # Velocities
+    axes[0,0].plot(filtered.inputs[:, 0], label='X Velocity')
+    axes[0,0].plot(filtered.inputs[:, 1], label='Y Velocity')
+    axes[0,0].set_title('Vehicle Velocities')
+    axes[0,0].set_ylabel('Velocity (m/s)')
+    axes[0,0].legend()
+    axes[0,0].grid(True)
+    
+    # Angular rates
+    axes[0,1].plot(filtered.inputs[:, 3], label='Roll Rate')
+    axes[0,1].plot(filtered.inputs[:, 4], label='Pitch Rate')
+    axes[0,1].plot(filtered.inputs[:, 5], label='Yaw Rate')
+    axes[0,1].set_title('Angular Rates')
+    axes[0,1].set_ylabel('Angular Rate (rad/s)')
+    axes[0,1].legend()
+    axes[0,1].grid(True)
+    
+    # Commands vs Actual
+    axes[1,0].plot(filtered.inputs[:, 13], label='Command Velocity')
+    axes[1,0].plot(np.sqrt(filtered.inputs[:, 0]**2 + filtered.inputs[:, 1]**2), 
+                   label='Actual Velocity')
+    axes[1,0].set_title('Command vs Actual Velocity')
+    axes[1,0].set_ylabel('Velocity (m/s)')
+    axes[1,0].legend()
+    axes[1,0].grid(True)
+    
+    # Steering analysis
+    axes[1,1].plot(filtered.inputs[:, 14], label='Steering Angle')
+    axes[1,1].set_title('Steering Angle')
+    axes[1,1].set_ylabel('Angle (rad)')
+    axes[1,1].legend()
+    axes[1,1].grid(True)
+    
+    # Accelerations
+    axes[2,0].plot(filtered.inputs[:, 10], label='X Acceleration')
+    axes[2,0].plot(filtered.inputs[:, 11], label='Y Acceleration')
+    axes[2,0].set_title('Vehicle Accelerations')
+    axes[2,0].set_ylabel('Acceleration (m/s²)')
+    axes[2,0].legend()
+    axes[2,0].grid(True)
+    
+    # Curvature
+    yaw_rate = filtered.inputs[:, 5]
+    velocity = np.sqrt(filtered.inputs[:, 0]**2 + filtered.inputs[:, 1]**2)
+    curvature = np.where(velocity > 0.1, yaw_rate / velocity, 0)
+    axes[2,1].plot(curvature, label='Path Curvature')
+    axes[2,1].set_title('Path Curvature')
+    axes[2,1].set_ylabel('Curvature (1/m)')
+    axes[2,1].legend()
+    axes[2,1].grid(True)
+    
+    plt.tight_layout()
+    plt.show()
+
+def plot_trajectory_with_states(filtered):
+    """Plot trajectory with color-coded velocity and steering"""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+    
+    # Trajectory colored by velocity
+    velocity = np.sqrt(filtered.inputs[:, 0]**2 + filtered.inputs[:, 1]**2)
+    points = ax1.scatter(filtered.positions[:, 0], filtered.positions[:, 1], 
+                        c=velocity, cmap='viridis', s=5)
+    ax1.set_title('Trajectory Colored by Velocity')
+    ax1.set_xlabel('X Position (m)')
+    ax1.set_ylabel('Y Position (m)')
+    ax1.axis('equal')
+    fig.colorbar(points, ax=ax1, label='Velocity (m/s)')
+    
+    # Trajectory colored by steering angle
+    points = ax2.scatter(filtered.positions[:, 0], filtered.positions[:, 1], 
+                        c=filtered.inputs[:, 14], cmap='RdYlBu', s=5)
+    ax2.set_title('Trajectory Colored by Steering Angle')
+    ax2.set_xlabel('X Position (m)')
+    ax2.set_ylabel('Y Position (m)')
+    ax2.axis('equal')
+    fig.colorbar(points, ax=ax2, label='Steering Angle (rad)')
+    
+    plt.tight_layout()
+    plt.show()
+
 if __name__ == "__main__":
     # Load and process data
-    raw_data = load_npz_file("../data_record_20deg.npz")
-    processed = extract_features(raw_data)
+    raw_data = load_npz_file("../data/data_record4.npz")
+    control_data = "../data/raw_control_data.npz"
+
+    
+
+    processed = extract_features(raw_data, control_data)
     filtered, predicted, actual  = filter_invalid_transitions(processed)
     # filtered = remove_steering_jumps(processed)
     
     # Print sample data
     print("\n=== First 2 Input Samples ===")
-    input_labels = ["vx","vy","vz","wx","wy","wz","qw","qx","qy","qz","ax","ay","az","v_cmd","steer_cmd"]
+    input_labels = [
+        "X Velocity", "Y Velocity", "Z Velocity",
+        "Roll Rate", "Pitch Rate", "Yaw Rate",
+        "Quaternion W", "Quaternion X", "Quaternion Y", "Quaternion Z",
+        "X Acceleration", "Y Acceleration", "Z Acceleration",
+        "Command Velocity", "Command Steering"
+    ]
     for i in range(2):
         print(f"\nSample {i}:")
         for j, label in enumerate(input_labels):
             print(f"  {label}: {filtered.inputs[i, j]:.6f}")
     
     print("\n=== First Target Sample ===")
-    target_labels = ["dx","dy","dsteer","dvx","dvy","dwz","dyaw"]
+    target_labels = [
+        "X Position Change", "Y Position Change", 
+        "Steering Change", "X Velocity Change", 
+        "Y Velocity Change", "Yaw Rate Change",
+        "Heading Change"
+    ]
     for j, label in enumerate(target_labels):
         print(f"  {label}: {filtered.targets[0, j]:.6f}")
     
@@ -237,19 +392,30 @@ if __name__ == "__main__":
         plt.xlabel('Value')
         plt.ylabel('Frequency')
     plt.tight_layout()
-    plt.savefig('feature_histograms.png')
     plt.show()
     
     # Plot trajectory
     plt.figure(figsize=(10, 8))
     plt.plot(filtered.positions[:, 0], filtered.positions[:, 1], 'b-', label='Actual Path')
-    plt.title("Vehicle Trajectory")
+    plt.title("plots/Vehicle Trajectory")
     plt.xlabel("X Position (m)")
     plt.ylabel("Y Position (m)")
     plt.axis('equal')
     plt.grid(True, alpha=0.3)
     plt.legend()
-    plt.savefig('vehicle_trajectory.png')
     plt.show()
+    
+    # Plot all actual steering angles from filtered data
+    plt.figure(figsize=(10, 4))
+    plt.plot(filtered.inputs[:, 14], label="Actual Steering Angle")
+    plt.title("Actual Steering Angles Over Time")
+    plt.xlabel("Time Step")
+    plt.ylabel("Steering Angle (rad)")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    plot_vehicle_states(filtered)
+    plot_trajectory_with_states(filtered)
 
 

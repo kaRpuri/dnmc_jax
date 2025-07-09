@@ -1,0 +1,39 @@
+Starting training for 100 epochs...
+Train batches: 137, Val batches: 30
+Epoch   0 | Train Loss: 45.819324 | Val Loss: 19.851873 | Time: 12.2s
+         | Train L2: 5.200762 | Val L2: 4.999448
+         | New best model saved! Val loss: 19.851873
+         | New best model saved! Val loss: 9.351247
+         | New best model saved! Val loss: 7.262904
+         | New best model saved! Val loss: 6.773515
+         | New best model saved! Val loss: 6.640969
+         | New best model saved! Val loss: 6.603596
+         | New best model saved! Val loss: 6.591106
+         | New best model saved! Val loss: 6.590633
+         | New best model saved! Val loss: 6.590342
+Epoch  10 | Train Loss: 6.608893 | Val Loss: 6.588561 | Time: 0.1s
+         | Train L2: 5.156735 | Val L2: 5.145237
+         | New best model saved! Val loss: 6.588561
+         | New best model saved! Val loss: 6.587815
+Epoch  20 | Train Loss: 6.608374 | Val Loss: 6.588256 | Time: 0.1s
+         | Train L2: 5.154709 | Val L2: 5.148811
+Epoch  30 | Train Loss: 6.609370 | Val Loss: 6.588984 | Time: 0.1s
+         | Train L2: 5.154638 | Val L2: 5.132383
+         | New best model saved! Val loss: 6.587552
+Epoch  40 | Train Loss: 6.615814 | Val Loss: 6.588687 | Time: 0.1s
+         | Train L2: 5.161232 | Val L2: 5.161488
+Epoch  50 | Train Loss: 6.605476 | Val Loss: 6.589342 | Time: 0.1s
+         | Train L2: 5.152642 | Val L2: 5.129622
+Epoch  60 | Train Loss: 6.609941 | Val Loss: 6.588933 | Time: 0.1s
+         | Train L2: 5.155372 | Val L2: 5.131035
+Epoch  70 | Train Loss: 6.606143 | Val Loss: 6.588159 | Time: 0.1s
+         | Train L2: 5.150763 | Val L2: 5.138884
+Epoch  80 | Train Loss: 6.607756 | Val Loss: 6.589080 | Time: 0.1s
+         | Train L2: 5.153026 | Val L2: 5.128652
+Epoch  90 | Train Loss: 6.604931 | Val Loss: 6.588447 | Time: 0.1s
+         | Train L2: 5.150412 | Val L2: 5.135612
+Epoch  99 | Train Loss: 6.610801 | Val Loss: 6.588833 | Time: 0.1s
+         | Train L2: 5.156682 | Val L2: 5.133085
+
+Training completed!
+Best validation loss: 6.587552

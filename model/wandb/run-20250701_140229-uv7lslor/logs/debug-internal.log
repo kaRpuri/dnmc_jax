@@ -1,0 +1,16 @@
+{"time":"2025-07-01T14:02:29.339154783-04:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/home/saichand/ros2_ws/src/dnmc_modl/model/wandb/run-20250701_140229-uv7lslor/logs/debug-core.log"}
+{"time":"2025-07-01T14:02:29.524259107-04:00","level":"INFO","msg":"stream: created new stream","id":"uv7lslor"}
+{"time":"2025-07-01T14:02:29.52429239-04:00","level":"INFO","msg":"stream: started","id":"uv7lslor"}
+{"time":"2025-07-01T14:02:29.524367581-04:00","level":"INFO","msg":"writer: Do: started","stream_id":"uv7lslor"}
+{"time":"2025-07-01T14:02:29.524455796-04:00","level":"INFO","msg":"sender: started","stream_id":"uv7lslor"}
+{"time":"2025-07-01T14:02:29.524481754-04:00","level":"INFO","msg":"handler: started","stream_id":"uv7lslor"}
+{"time":"2025-07-01T14:02:29.799481041-04:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-01T14:03:04.638031534-04:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-01T14:03:04.638067271-04:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-01T14:03:04.976951854-04:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-07-01T14:03:05.215069265-04:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-07-01T14:03:05.216676567-04:00","level":"INFO","msg":"stream: closing","id":"uv7lslor"}
+{"time":"2025-07-01T14:03:05.216682839-04:00","level":"INFO","msg":"handler: closed","stream_id":"uv7lslor"}
+{"time":"2025-07-01T14:03:05.216687538-04:00","level":"INFO","msg":"writer: Close: closed","stream_id":"uv7lslor"}
+{"time":"2025-07-01T14:03:05.216689732-04:00","level":"INFO","msg":"sender: closed","stream_id":"uv7lslor"}
+{"time":"2025-07-01T14:03:05.216717795-04:00","level":"INFO","msg":"stream: closed","id":"uv7lslor"}
