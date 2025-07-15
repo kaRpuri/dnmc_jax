@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 210, in <module>
+    train_data = np.load(CONFIG['data']['train_data_path'])
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/numpy/lib/_npyio_impl.py", line 451, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+FileNotFoundError: [Errno 2] No such file or directory: './data_processing/processed/train.npz'

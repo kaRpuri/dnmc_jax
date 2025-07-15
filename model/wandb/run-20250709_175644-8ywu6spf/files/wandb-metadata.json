@@ -1,0 +1,43 @@
+{
+  "os": "Linux-6.8.0-60-generic-x86_64-with-glibc2.35",
+  "python": "CPython 3.10.18",
+  "startedAt": "2025-07-09T21:56:45.129518Z",
+  "program": "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py",
+  "codePath": "model/train.py",
+  "git": {
+    "remote": "https://github.com/kaRpuri/dnmc_jax.git",
+    "commit": "f00ae06d6e60f9af2e409b47a29405c892891c12"
+  },
+  "email": "kapuri@seas.upenn.edu",
+  "root": "/home/saichand/ros2_ws/src/dnmc_modl/model",
+  "host": "retrolifts-R15",
+  "executable": "/home/saichand/anaconda3/envs/dnmc_jax/bin/python",
+  "codePathLocal": "train.py",
+  "cpu_count": 12,
+  "cpu_count_logical": 24,
+  "gpu": "NVIDIA GeForce RTX 4070",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "244939624448",
+      "used": "214524932096"
+    }
+  },
+  "memory": {
+    "total": "33335812096"
+  },
+  "cpu": {
+    "count": 12,
+    "countLogical": 24
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA GeForce RTX 4070",
+      "memoryTotal": "12878610432",
+      "cudaCores": 5888,
+      "architecture": "Ada",
+      "uuid": "GPU-01742249-2ba4-b0dc-dd31-1884eed058da"
+    }
+  ],
+  "cudaVersion": "12.4"
+}

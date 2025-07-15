@@ -1,0 +1,148 @@
+Starting training for 200 epochs...
+Train batches: 77, Val batches: 20
+Epoch   0 | Train Loss: 3.223473 | Val Loss: 2.323529 | Train R2: 0.3497 | Val R2: 0.5307 | Time: 18.3s
+         | Train L2: 4.660041 | Val L2: 3.247623
+         | New best model saved! Val loss: 2.323529
+         | New best model saved! Val loss: 1.940500
+         | New best model saved! Val loss: 1.797949
+         | New best model saved! Val loss: 1.720749
+         | New best model saved! Val loss: 1.668423
+         | New best model saved! Val loss: 1.618263
+         | New best model saved! Val loss: 1.588238
+         | New best model saved! Val loss: 1.562885
+         | New best model saved! Val loss: 1.537652
+         | New best model saved! Val loss: 1.505262
+Epoch  10 | Train Loss: 1.397790 | Val Loss: 1.490275 | Train R2: 0.7441 | Val R2: 0.7181 | Time: 2.5s
+         | Train L2: 1.809483 | Val L2: 1.951267
+         | New best model saved! Val loss: 1.490275
+         | New best model saved! Val loss: 1.467035
+         | New best model saved! Val loss: 1.450767
+         | New best model saved! Val loss: 1.437403
+         | New best model saved! Val loss: 1.414384
+         | New best model saved! Val loss: 1.411520
+         | New best model saved! Val loss: 1.390174
+         | New best model saved! Val loss: 1.379505
+         | New best model saved! Val loss: 1.376029
+         | New best model saved! Val loss: 1.365112
+Epoch  20 | Train Loss: 1.223994 | Val Loss: 1.348263 | Train R2: 0.7819 | Val R2: 0.7500 | Time: 2.6s
+         | Train L2: 1.546908 | Val L2: 1.733969
+         | New best model saved! Val loss: 1.348263
+         | New best model saved! Val loss: 1.342760
+         | New best model saved! Val loss: 1.333344
+         | New best model saved! Val loss: 1.324565
+         | New best model saved! Val loss: 1.314975
+         | New best model saved! Val loss: 1.310070
+Epoch  30 | Train Loss: 1.142704 | Val Loss: 1.304773 | Train R2: 0.7991 | Val R2: 0.7595 | Time: 2.5s
+         | Train L2: 1.425197 | Val L2: 1.667693
+         | New best model saved! Val loss: 1.304773
+         | New best model saved! Val loss: 1.301215
+         | New best model saved! Val loss: 1.298252
+         | New best model saved! Val loss: 1.296932
+         | New best model saved! Val loss: 1.294555
+         | New best model saved! Val loss: 1.291983
+         | New best model saved! Val loss: 1.290296
+Epoch  40 | Train Loss: 1.096560 | Val Loss: 1.284312 | Train R2: 0.8088 | Val R2: 0.7641 | Time: 2.5s
+         | Train L2: 1.356744 | Val L2: 1.636257
+         | New best model saved! Val loss: 1.284312
+         | New best model saved! Val loss: 1.282684
+         | New best model saved! Val loss: 1.275915
+         | New best model saved! Val loss: 1.272800
+         | New best model saved! Val loss: 1.272258
+Epoch  50 | Train Loss: 1.059215 | Val Loss: 1.269367 | Train R2: 0.8162 | Val R2: 0.7675 | Time: 2.5s
+         | Train L2: 1.301825 | Val L2: 1.613647
+         | New best model saved! Val loss: 1.269367
+         | New best model saved! Val loss: 1.269311
+         | New best model saved! Val loss: 1.266755
+Epoch  60 | Train Loss: 1.034222 | Val Loss: 1.265597 | Train R2: 0.8213 | Val R2: 0.7683 | Time: 2.5s
+         | Train L2: 1.264935 | Val L2: 1.608175
+         | New best model saved! Val loss: 1.265597
+         | New best model saved! Val loss: 1.265429
+         | New best model saved! Val loss: 1.262982
+         | New best model saved! Val loss: 1.259786
+         | New best model saved! Val loss: 1.259534
+Traceback (most recent call last):
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 215, in <module>
+    final_state, best_loss = train_model(train_data, val_data, CONFIG)
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 151, in train_model
+    state, train_loss, train_metrics, train_r2 = train_epoch(
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 84, in train_epoch
+    preds = np.array(state.apply_fn({'params': state.params}, model_inputs))
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/traceback_util.py", line 182, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 2240, in apply
+    return apply(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/core/scope.py", line 1079, in wrapper
+    y = fn(root, *args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 3022, in scope_fn
+    return fn(module.clone(parent=scope, _deep_clone=True), *args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 699, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 1216, in _call_wrapped_method
+    y = run_fun(self, *args, **kwargs)
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/model.py", line 49, in __call__
+    vel_out = nn.Dense(32)(h3)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 699, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 1216, in _call_wrapped_method
+    y = run_fun(self, *args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/linear.py", line 263, in __call__
+    kernel = self.param(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 1877, in param
+    v = self.scope.param(name, init_fn, *init_args, unbox=unbox, **init_kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/core/scope.py", line 950, in param
+    abs_value = jax.eval_shape(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/traceback_util.py", line 182, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/api.py", line 3014, in eval_shape
+    return jit(fun).eval_shape(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/traceback_util.py", line 182, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/pjit.py", line 352, in jit_eval_shape
+    p, _ = _infer_params(jit_func._fun, jit_func._jit_info, args, kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/pjit.py", line 686, in _infer_params
+    return _infer_params_internal(fun, ji, args, kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/pjit.py", line 710, in _infer_params_internal
+    p, args_flat = _infer_params_impl(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/pjit.py", line 606, in _infer_params_impl
+    jaxpr, consts, out_avals, attrs_tracked = _create_pjit_jaxpr(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/linear_util.py", line 471, in memoized_fun
+    ans = call(fun, *args)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/pjit.py", line 1414, in _create_pjit_jaxpr
+    jaxpr, global_out_avals, consts, attrs_tracked = pe.trace_to_jaxpr_dynamic(fun, in_type)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/profiler.py", line 354, in wrapper
+    return func(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/interpreters/partial_eval.py", line 2292, in trace_to_jaxpr_dynamic
+    ans = fun.call_wrapped(*in_tracers)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/linear_util.py", line 211, in call_wrapped
+    return self.f_transformed(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/api_util.py", line 288, in _argnums_partial
+    return _fun(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/api_util.py", line 73, in flatten_fun
+    ans = f(*py_args, **py_kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/linear_util.py", line 396, in _get_result_paths_thunk
+    ans = _fun(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/core/scope.py", line 951, in <lambda>
+    lambda: init_fn(random.key(0), *init_args, **init_kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/nn/initializers.py", line 346, in init
+    stddev = jnp.sqrt(variance) / jnp.array(.87962566103423978, dtype)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/traceback_util.py", line 182, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/pjit.py", line 292, in cache_miss
+    executable, pgle_profiler) = _python_pjit_helper(fun, jit_info, *args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/pjit.py", line 139, in _python_pjit_helper
+    p, args_flat = _infer_params(fun, jit_info, args, kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/pjit.py", line 686, in _infer_params
+    return _infer_params_internal(fun, ji, args, kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/pjit.py", line 692, in _infer_params_internal
+    dbg = debug_info(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/api_util.py", line 619, in debug_info
+    arg_names = _non_static_arg_names(signature, args, kwargs, static_argnums,
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/api_util.py", line 715, in _non_static_arg_names
+    return tuple(f'{name}{lu._clean_keystr_arg_names(path)}'
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/api_util.py", line 715, in <genexpr>
+    return tuple(f'{name}{lu._clean_keystr_arg_names(path)}'
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/linear_util.py", line 392, in _clean_keystr_arg_names
+    return _re_clean_keystr_arg_names.sub(r"\1", res)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/re.py", line 324, in _subx
+    def _subx(pattern, template):
+KeyboardInterrupt

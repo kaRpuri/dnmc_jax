@@ -1,0 +1,124 @@
+Starting training for 200 epochs...
+Train batches: 77, Val batches: 20
+Epoch   0 | Train Loss: 6.331184 | Val Loss: 5.018538 | Train R2: -0.3614 | Val R2: -0.0789 | Time: 19.2s
+         | Train L2: 9.572289 | Val L2: 7.498654
+         | New best model saved! Val loss: 5.018538
+         | New best model saved! Val loss: 3.155177
+         | New best model saved! Val loss: 2.437059
+         | New best model saved! Val loss: 2.091721
+         | New best model saved! Val loss: 1.906939
+         | New best model saved! Val loss: 1.806516
+         | New best model saved! Val loss: 1.735770
+         | New best model saved! Val loss: 1.678596
+         | New best model saved! Val loss: 1.631712
+         | New best model saved! Val loss: 1.590316
+Epoch  10 | Train Loss: 1.496232 | Val Loss: 1.559510 | Train R2: 0.7223 | Val R2: 0.7027 | Time: 2.6s
+         | Train L2: 1.960086 | Val L2: 2.057861
+         | New best model saved! Val loss: 1.559510
+         | New best model saved! Val loss: 1.527328
+         | New best model saved! Val loss: 1.510264
+         | New best model saved! Val loss: 1.479845
+         | New best model saved! Val loss: 1.477104
+         | New best model saved! Val loss: 1.458427
+         | New best model saved! Val loss: 1.439343
+         | New best model saved! Val loss: 1.418403
+         | New best model saved! Val loss: 1.410117
+Epoch  20 | Train Loss: 1.263928 | Val Loss: 1.396054 | Train R2: 0.7731 | Val R2: 0.7392 | Time: 2.6s
+         | Train L2: 1.607184 | Val L2: 1.807562
+         | New best model saved! Val loss: 1.396054
+         | New best model saved! Val loss: 1.392634
+         | New best model saved! Val loss: 1.374438
+         | New best model saved! Val loss: 1.374291
+         | New best model saved! Val loss: 1.371132
+         | New best model saved! Val loss: 1.370352
+         | New best model saved! Val loss: 1.345800
+         | New best model saved! Val loss: 1.343496
+         | New best model saved! Val loss: 1.343123
+Epoch  30 | Train Loss: 1.168081 | Val Loss: 1.329514 | Train R2: 0.7938 | Val R2: 0.7541 | Time: 2.6s
+         | Train L2: 1.463234 | Val L2: 1.706211
+         | New best model saved! Val loss: 1.329514
+         | New best model saved! Val loss: 1.321510
+         | New best model saved! Val loss: 1.320019
+         | New best model saved! Val loss: 1.317737
+         | New best model saved! Val loss: 1.311876
+         | New best model saved! Val loss: 1.307803
+         | New best model saved! Val loss: 1.299542
+Epoch  40 | Train Loss: 1.116343 | Val Loss: 1.300321 | Train R2: 0.8049 | Val R2: 0.7607 | Time: 2.6s
+         | Train L2: 1.385939 | Val L2: 1.660743
+         | New best model saved! Val loss: 1.296610
+         | New best model saved! Val loss: 1.292985
+         | New best model saved! Val loss: 1.290331
+         | New best model saved! Val loss: 1.284047
+Epoch  50 | Train Loss: 1.079521 | Val Loss: 1.286798 | Train R2: 0.8124 | Val R2: 0.7638 | Time: 2.6s
+         | Train L2: 1.331381 | Val L2: 1.639998
+         | New best model saved! Val loss: 1.283666
+         | New best model saved! Val loss: 1.280304
+         | New best model saved! Val loss: 1.279430
+         | New best model saved! Val loss: 1.274655
+Epoch  60 | Train Loss: 1.049941 | Val Loss: 1.284086 | Train R2: 0.8186 | Val R2: 0.7644 | Time: 2.5s
+         | Train L2: 1.287866 | Val L2: 1.635731
+         | New best model saved! Val loss: 1.265081
+         | New best model saved! Val loss: 1.263912
+Epoch  70 | Train Loss: 1.026304 | Val Loss: 1.265720 | Train R2: 0.8234 | Val R2: 0.7686 | Time: 2.5s
+         | Train L2: 1.253469 | Val L2: 1.607705
+         | New best model saved! Val loss: 1.259689
+         | New best model saved! Val loss: 1.256649
+Epoch  80 | Train Loss: 1.007720 | Val Loss: 1.264045 | Train R2: 0.8272 | Val R2: 0.7690 | Time: 2.5s
+         | Train L2: 1.226215 | Val L2: 1.605295
+         | New best model saved! Val loss: 1.253947
+Epoch  90 | Train Loss: 0.990499 | Val Loss: 1.254575 | Train R2: 0.8306 | Val R2: 0.7711 | Time: 2.5s
+         | Train L2: 1.201446 | Val L2: 1.590805
+         | New best model saved! Val loss: 1.251248
+         | New best model saved! Val loss: 1.251205
+         | New best model saved! Val loss: 1.248470
+Epoch 100 | Train Loss: 0.975794 | Val Loss: 1.260638 | Train R2: 0.8332 | Val R2: 0.7698 | Time: 2.6s
+         | Train L2: 1.180385 | Val L2: 1.599861
+Epoch 110 | Train Loss: 0.961776 | Val Loss: 1.260994 | Train R2: 0.8360 | Val R2: 0.7696 | Time: 2.5s
+         | Train L2: 1.160335 | Val L2: 1.600638
+Epoch 120 | Train Loss: 0.950239 | Val Loss: 1.256939 | Train R2: 0.8382 | Val R2: 0.7707 | Time: 2.6s
+         | Train L2: 1.143943 | Val L2: 1.594090
+Traceback (most recent call last):
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 278, in <module>
+    final_state, best_loss = train_model(train_data, val_data, CONFIG)
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 212, in train_model
+    state, train_loss, train_metrics, train_r2 = train_epoch(
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 103, in train_epoch
+    preds = np.array(state.apply_fn({'params': state.params}, model_inputs))
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/traceback_util.py", line 182, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 2240, in apply
+    return apply(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/core/scope.py", line 1079, in wrapper
+    y = fn(root, *args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 3022, in scope_fn
+    return fn(module.clone(parent=scope, _deep_clone=True), *args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 699, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 1216, in _call_wrapped_method
+    y = run_fun(self, *args, **kwargs)
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/model.py", line 49, in __call__
+    vel_out = nn.Dense(32)(h3)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 699, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 1216, in _call_wrapped_method
+    y = run_fun(self, *args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/linear.py", line 263, in __call__
+    kernel = self.param(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 1877, in param
+    v = self.scope.param(name, init_fn, *init_args, unbox=unbox, **init_kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/core/scope.py", line 950, in param
+    abs_value = jax.eval_shape(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/traceback_util.py", line 182, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/api.py", line 3014, in eval_shape
+    return jit(fun).eval_shape(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/api.py", line 158, in wrapped
+    return f(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/api.py", line 322, in jit
+    return pjit.make_jit(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/pjit.py", line 499, in make_jit
+    jit_info = _parse_jit_arguments(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/pjit.py", line 463, in _parse_jit_arguments
+    return PjitInfo(
+  File "<string>", line 1, in <lambda>
+KeyboardInterrupt

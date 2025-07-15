@@ -72,31 +72,11 @@ def extract_features(raw_data, control_data):
         X[:, 10:13] = raw_data['root_acceleration_base_link'][mask]
         
         # Replace control inputs with raw control data if available
-        if use_raw_control:
-            from scipy.interpolate import interp1d
-            
-            # Timestamps from raw control data
-            raw_ts = raw_control['timestamps']
-            
+        if use_raw_control:            
             if rid < raw_control['velocity'].shape[1]:
-                # Create interpolation functions for velocity and steering
-                vel_interp = interp1d(
-                    raw_ts, 
-                    raw_control['velocity'][:, rid, 0],
-                    bounds_error=False, 
-                    fill_value=(raw_control['velocity'][0, rid, 0], raw_control['velocity'][-1, rid, 0])
-                )
-                
-                steer_interp = interp1d(
-                    raw_ts, 
-                    raw_control['steering'][:, rid, 0],
-                    bounds_error=False, 
-                    fill_value=(raw_control['steering'][0, rid, 0], raw_control['steering'][-1, rid, 0])
-                )
-                
-                # Get interpolated values at our timestamps
-                X[:, 13] = vel_interp(ts)
-                X[:, 14] = steer_interp(ts)
+                # Directly assign control values
+                X[:, 13] = raw_control['velocity'][:, rid, 0]
+                X[:, 14] = raw_control['steering'][:, rid, 0]
                 
                 print(f"Robot {rid}: Using raw control data")
                 print(f"  - Original velocity range: [{raw_data['target_velocity'][mask, 0].min():.3f}, {raw_data['target_velocity'][mask, 0].max():.3f}]")
@@ -115,7 +95,8 @@ def extract_features(raw_data, control_data):
         # Compute derivatives (targets) for this robot
         dt = np.diff(ts)
         if len(dt) == 0:  # Skip if only one data point
-            continue
+            continue 
+
         
         dxdy = np.diff(positions, axis=0) / dt[:, None]
         dsteer = np.diff(X[:, 14]) / dt
@@ -331,8 +312,8 @@ def plot_trajectory_with_states(filtered):
 
 if __name__ == "__main__":
     # Load and process data
-    raw_data = load_npz_file("../data/data_record4.npz")
-    control_data = "../data/raw_control_data.npz"
+    raw_data = load_npz_file("../data/data_record5.npz")
+    control_data = "../data/raw_control_data2.npz"
 
     
 

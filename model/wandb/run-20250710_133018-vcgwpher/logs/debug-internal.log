@@ -1,0 +1,16 @@
+{"time":"2025-07-10T13:30:19.023632933-04:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/home/saichand/ros2_ws/src/dnmc_modl/model/wandb/run-20250710_133018-vcgwpher/logs/debug-core.log"}
+{"time":"2025-07-10T13:30:19.212520154-04:00","level":"INFO","msg":"stream: created new stream","id":"vcgwpher"}
+{"time":"2025-07-10T13:30:19.212540202-04:00","level":"INFO","msg":"stream: started","id":"vcgwpher"}
+{"time":"2025-07-10T13:30:19.212554148-04:00","level":"INFO","msg":"writer: Do: started","stream_id":"vcgwpher"}
+{"time":"2025-07-10T13:30:19.212563065-04:00","level":"INFO","msg":"handler: started","stream_id":"vcgwpher"}
+{"time":"2025-07-10T13:30:19.212582902-04:00","level":"INFO","msg":"sender: started","stream_id":"vcgwpher"}
+{"time":"2025-07-10T13:30:19.375274851-04:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-10T13:38:16.196634389-04:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-10T13:38:16.196669786-04:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-10T13:38:16.547588774-04:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-07-10T13:38:16.804499213-04:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-07-10T13:38:16.806205554-04:00","level":"INFO","msg":"stream: closing","id":"vcgwpher"}
+{"time":"2025-07-10T13:38:16.80621391-04:00","level":"INFO","msg":"handler: closed","stream_id":"vcgwpher"}
+{"time":"2025-07-10T13:38:16.80621924-04:00","level":"INFO","msg":"writer: Close: closed","stream_id":"vcgwpher"}
+{"time":"2025-07-10T13:38:16.806224429-04:00","level":"INFO","msg":"sender: closed","stream_id":"vcgwpher"}
+{"time":"2025-07-10T13:38:16.806255067-04:00","level":"INFO","msg":"stream: closed","id":"vcgwpher"}

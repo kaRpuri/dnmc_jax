@@ -1,0 +1,16 @@
+{"time":"2025-07-09T17:48:18.590166933-04:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/home/saichand/ros2_ws/src/dnmc_modl/model/wandb/run-20250709_174818-qlemalch/logs/debug-core.log"}
+{"time":"2025-07-09T17:48:18.781971667-04:00","level":"INFO","msg":"stream: created new stream","id":"qlemalch"}
+{"time":"2025-07-09T17:48:18.781995491-04:00","level":"INFO","msg":"stream: started","id":"qlemalch"}
+{"time":"2025-07-09T17:48:18.782007925-04:00","level":"INFO","msg":"writer: Do: started","stream_id":"qlemalch"}
+{"time":"2025-07-09T17:48:18.782013956-04:00","level":"INFO","msg":"sender: started","stream_id":"qlemalch"}
+{"time":"2025-07-09T17:48:18.782055885-04:00","level":"INFO","msg":"handler: started","stream_id":"qlemalch"}
+{"time":"2025-07-09T17:48:18.940793291-04:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-09T17:51:44.551840728-04:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-09T17:51:44.551870124-04:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-09T17:51:45.553118753-04:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading config.yaml","runtime_seconds":0.020852869,"progress":"870B/870B"}],"total_operations":1}}
+{"time":"2025-07-09T17:51:45.666436748-04:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-07-09T17:51:46.25248598-04:00","level":"INFO","msg":"stream: closing","id":"qlemalch"}
+{"time":"2025-07-09T17:51:46.252498393-04:00","level":"INFO","msg":"handler: closed","stream_id":"qlemalch"}
+{"time":"2025-07-09T17:51:46.252505466-04:00","level":"INFO","msg":"writer: Close: closed","stream_id":"qlemalch"}
+{"time":"2025-07-09T17:51:46.252509243-04:00","level":"INFO","msg":"sender: closed","stream_id":"qlemalch"}
+{"time":"2025-07-09T17:51:46.252557123-04:00","level":"INFO","msg":"stream: closed","id":"qlemalch"}

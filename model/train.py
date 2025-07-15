@@ -1,3 +1,4 @@
+import sys  # Add this import statement
 import jax
 import jax.numpy as jnp
 import optax
@@ -6,11 +7,13 @@ import numpy as np
 from pathlib import Path
 import pickle
 import time
-import sys
+import yaml
 import wandb
 
-# Import config
-from config import CONFIG
+# Load configuration from config.yaml
+CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
+with open(CONFIG_PATH, "r") as f:
+    CONFIG = yaml.safe_load(f)
 
 # Import model and loss
 from model import DynamicsModel, compute_loss, prepare_model_inputs
@@ -23,7 +26,7 @@ class TrainState(train_state.TrainState):
     """Train state for Flax models."""
     pass
 
-def create_train_state(rng, learning_rate=1e-3):
+def create_train_state(rng, learning_rate=CONFIG['training']['learning_rate']):
     """Initialize model parameters and optimizer."""
     model = DynamicsModel()
     dummy_input = jax.random.normal(rng, (1, 15))  # 15D input
@@ -41,7 +44,7 @@ def create_train_state(rng, learning_rate=1e-3):
     )
 
 @jax.jit
-def train_step(state, batch_inputs, batch_targets, beta1=1.0, beta2=0.1, beta3=1e-4):
+def train_step(state, batch_inputs, batch_targets, beta1=CONFIG['loss_weights']['beta1'], beta2=CONFIG['loss_weights']['beta2'], beta3=CONFIG['loss_weights']['beta3']):
     """Single training step."""
     def loss_fn(params):
         loss_val, metrics = compute_loss(
@@ -54,7 +57,7 @@ def train_step(state, batch_inputs, batch_targets, beta1=1.0, beta2=0.1, beta3=1
     return new_state, loss_val, metrics
 
 @jax.jit
-def eval_step(state, batch_inputs, batch_targets, beta1=1.0, beta2=0.1, beta3=1e-4):
+def eval_step(state, batch_inputs, batch_targets, beta1=CONFIG['loss_weights']['beta1'], beta2=CONFIG['loss_weights']['beta2'], beta3=CONFIG['loss_weights']['beta3']):
     """Single evaluation step."""
     loss_val, metrics = compute_loss(
         state.params, state.apply_fn, batch_inputs, batch_targets,
@@ -119,15 +122,11 @@ def validate_epoch(state, val_loader, beta1, beta2, beta3):
     r2 = r2_score(all_targets, all_preds)
     return avg_loss, avg_metrics, r2
 
-def train_model(train_data, val_data, config):
+def train_model(train_data, val_data, config=CONFIG):
     """Main training loop."""
-    batch_size = config['batch_size']
-    epochs = config['epochs']
-    learning_rate = config['learning_rate']
-    beta1 = config['beta1']
-    beta2 = config['beta2']
-    beta3 = config['beta3']
-    save_dir = Path(config['save_dir'])
+    batch_size = config['training']['batch_size']
+    epochs = config['training']['epochs']
+    save_dir = Path(config['general']['save_dir'])
     save_dir.mkdir(exist_ok=True)
 
     train_loader = DataLoader(
@@ -139,8 +138,8 @@ def train_model(train_data, val_data, config):
         batch_size=batch_size, shuffle=False
     )
 
-    rng = jax.random.PRNGKey(config.get('seed', 42))
-    state = create_train_state(rng, learning_rate)
+    rng = jax.random.PRNGKey(config['general']['seed'])
+    state = create_train_state(rng)
     best_val_loss = float('inf')
 
     print(f"Starting training for {epochs} epochs...")
@@ -149,10 +148,10 @@ def train_model(train_data, val_data, config):
     for epoch in range(epochs):
         start_time = time.time()
         state, train_loss, train_metrics, train_r2 = train_epoch(
-            state, train_loader, beta1, beta2, beta3
+            state, train_loader, config['loss_weights']['beta1'], config['loss_weights']['beta2'], config['loss_weights']['beta3']
         )
         val_loss, val_metrics, val_r2 = validate_epoch(
-            state, val_loader, beta1, beta2, beta3
+            state, val_loader, config['loss_weights']['beta1'], config['loss_weights']['beta2'], config['loss_weights']['beta3']
         )
         epoch_time = time.time() - start_time
 
@@ -201,17 +200,17 @@ def train_model(train_data, val_data, config):
 if __name__ == "__main__":
     # Initialize wandb
     wandb.init(
-        project=CONFIG['project'],
-        entity=CONFIG['entity'],
-        name=CONFIG['run_name'],
+        project=CONFIG['general']['project'],
+        entity=CONFIG['general']['entity'],
+        name=CONFIG['general']['run_name'],
         config=CONFIG
     )
 
     # Load normalized data
-    train_data = np.load(CONFIG['train_data_path'])
-    val_data = np.load(CONFIG['val_data_path'])
+    train_data = np.load(CONFIG['data']['train_data_path'])
+    val_data = np.load(CONFIG['data']['val_data_path'])
 
     # Train the model
-    final_state, best_loss = train_model(train_data, val_data, CONFIG)
+    final_state, best_loss = train_model(train_data, val_data)
     print(f"Best validation loss: {best_loss:.6f}")
     wandb.finish()

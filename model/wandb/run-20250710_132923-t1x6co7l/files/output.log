@@ -1,0 +1,14 @@
+jax.errors.SimplifiedTraceback: For simplicity, JAX has removed its internal frames from the traceback of the following exception. Set JAX_TRACEBACK_FILTERING=off to include these.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 214, in <module>
+    final_state, best_loss = train_model(train_data, val_data)
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 142, in train_model
+    state = create_train_state(rng)
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 33, in create_train_state
+    variables = model.init(rng, dummy_input)
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/model.py", line 21, in __call__
+    h1 = nn.Dense(CONFIG['model']['hidden_dim'])(x_norm)
+KeyError: 'model'

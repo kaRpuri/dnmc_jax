@@ -1,0 +1,52 @@
+Starting training for 200 epochs...
+Train batches: 77, Val batches: 20
+Epoch   0 | Train Loss: 6.328245 | Val Loss: 5.021340 | Train R2: -0.3607 | Val R2: -0.0796 | Time: 18.9s
+         | Train L2: 9.567902 | Val L2: 7.503168
+         | New best model saved! Val loss: 5.021340
+         | New best model saved! Val loss: 3.157655
+         | New best model saved! Val loss: 2.435403
+         | New best model saved! Val loss: 2.087181
+         | New best model saved! Val loss: 1.906251
+         | New best model saved! Val loss: 1.806054
+         | New best model saved! Val loss: 1.730320
+         | New best model saved! Val loss: 1.682783
+         | New best model saved! Val loss: 1.629351
+Traceback (most recent call last):
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 278, in <module>
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 212, in train_model
+    val_data = np.load(CONFIG['val_data_path'])
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/train.py", line 103, in train_epoch
+    all_preds = []
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/traceback_util.py", line 182, in reraise_with_filtered_traceback
+    return fun(*args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 2240, in apply
+    return apply(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/core/scope.py", line 1079, in wrapper
+    y = fn(root, *args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 3022, in scope_fn
+    return fn(module.clone(parent=scope, _deep_clone=True), *args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 699, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 1216, in _call_wrapped_method
+    y = run_fun(self, *args, **kwargs)
+  File "/home/saichand/ros2_ws/src/dnmc_modl/model/model.py", line 46, in __call__
+    def prepare_model_inputs(current_features):
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 699, in wrapped_module_method
+    return self._call_wrapped_method(fun, args, kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/module.py", line 1216, in _call_wrapped_method
+    y = run_fun(self, *args, **kwargs)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/linear.py", line 275, in __call__
+    inputs, kernel, bias = self.promote_dtype(
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/dtypes.py", line 78, in promote_dtype
+    dtype = canonicalize_dtype(*args, dtype=dtype, inexact=inexact)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/dtypes.py", line 45, in canonicalize_dtype
+    args_filtered = [jnp.asarray(x) for x in args if x is not None]
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/flax/linen/dtypes.py", line 45, in <listcomp>
+    args_filtered = [jnp.asarray(x) for x in args if x is not None]
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/numpy/array.py", line 383, in asarray
+    return array(a, dtype=dtype, copy=bool(copy), order=order, device=device)
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/numpy/array.py", line 227, in array
+    dtype = dtypes._lattice_result_type(*leaves)[0] if leaves else dtypes.float_
+  File "/home/saichand/anaconda3/envs/dnmc_jax/lib/python3.10/site-packages/jax/_src/dtypes.py", line 832, in _lattice_result_type
+    dtypes, weak_types = zip(*(_dtype_and_weaktype(arg) for arg in args))
+KeyboardInterrupt

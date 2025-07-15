@@ -1,0 +1,15 @@
+{"time":"2025-07-09T18:15:55.845989913-04:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/home/saichand/ros2_ws/src/dnmc_modl/model/wandb/run-20250709_181555-hoeth2sf/logs/debug-core.log"}
+{"time":"2025-07-09T18:15:56.250633059-04:00","level":"INFO","msg":"stream: created new stream","id":"hoeth2sf"}
+{"time":"2025-07-09T18:15:56.250657895-04:00","level":"INFO","msg":"stream: started","id":"hoeth2sf"}
+{"time":"2025-07-09T18:15:56.250671331-04:00","level":"INFO","msg":"writer: Do: started","stream_id":"hoeth2sf"}
+{"time":"2025-07-09T18:15:56.2506818-04:00","level":"INFO","msg":"handler: started","stream_id":"hoeth2sf"}
+{"time":"2025-07-09T18:15:56.250705635-04:00","level":"INFO","msg":"sender: started","stream_id":"hoeth2sf"}
+{"time":"2025-07-09T18:15:56.414825301-04:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-09T18:21:46.487225817-04:00","level":"INFO","msg":"stream: closing","id":"hoeth2sf"}
+{"time":"2025-07-09T18:21:46.487258589-04:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-09T18:21:46.487301379-04:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-09T18:21:46.774256389-04:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-07-09T18:21:46.934474935-04:00","level":"INFO","msg":"handler: closed","stream_id":"hoeth2sf"}
+{"time":"2025-07-09T18:21:46.934516112-04:00","level":"INFO","msg":"writer: Close: closed","stream_id":"hoeth2sf"}
+{"time":"2025-07-09T18:21:46.93453655-04:00","level":"INFO","msg":"sender: closed","stream_id":"hoeth2sf"}
+{"time":"2025-07-09T18:21:46.934571335-04:00","level":"INFO","msg":"stream: closed","id":"hoeth2sf"}

@@ -2,46 +2,65 @@ import jax
 import jax.numpy as jnp
 import flax.linen as nn
 from typing import Sequence
+import yaml
+from pathlib import Path
+
+# Load configuration from config.yaml
+CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
+with open(CONFIG_PATH, "r") as f:
+    CONFIG = yaml.safe_load(f)
 
 class DynamicsModel(nn.Module):
-    """
-    Multi-layer perceptron for vehicle dynamics delta state prediction.
-    
-    Architecture: [15, 32, 64, 128, 128, 64, 32, 7]
-    - Input: 15D (current features only)
-    - Output: 7D delta states [dx, dy, d_steering, dvx, dvy, dwz, dyaw]
-    """
+    """Enhanced dynamics model with residual connections and better layer sizing"""
     
     @nn.compact
-    def __call__(self, x):
-        # Layer 1: 15 -> 32
-        x = nn.Dense(32)(x)
-        x = nn.relu(x)
+    def __call__(self, x, training=False):
+        # Input normalization layer (helps training stability)
+        x_norm = nn.LayerNorm()(x)
         
-        # Layer 2: 32 -> 64
-        x = nn.Dense(64)(x)
-        x = nn.relu(x)
+        h1 = nn.Dense(CONFIG['model']['hidden_dim'])(x_norm)
+        h1 = nn.relu(h1)
+        h1 = nn.Dropout(CONFIG['model']['dropout_rate'], deterministic=not training)(h1)
         
-        # Layer 3: 64 -> 128
-        x = nn.Dense(128)(x)
-        x = nn.relu(x)
+        h2 = nn.Dense(CONFIG['model']['hidden_dim'] * 2)(h1)
+        h2 = nn.LayerNorm()(h2)
+        h2 = nn.relu(h2)
+        h2 = nn.Dense(CONFIG['model']['hidden_dim'] * 2)(h2)
+        h2 = nn.LayerNorm()(h2)
+        h2 = nn.relu(h2)
+        h2 = h2 + nn.Dense(CONFIG['model']['hidden_dim'] * 2)(h1)  # Skip connection
         
-        # Layer 4: 128 -> 128 (same size)
-        x = nn.Dense(128)(x)
-        x = nn.relu(x)
+        h3 = nn.Dense(CONFIG['model']['hidden_dim'] * 2)(h2)
+        h3 = nn.LayerNorm()(h3)
+        h3 = nn.relu(h3)
+        h3 = nn.Dense(CONFIG['model']['hidden_dim'] * 2)(h3)
+        h3 = nn.LayerNorm()(h3)
+        h3 = nn.relu(h3)
+        h3 = h3 + h2  # Skip connection
         
-        # Layer 5: 128 -> 64
-        x = nn.Dense(64)(x)
-        x = nn.relu(x)
+        # Output layers with separate paths for different output types
+        # Position changes
+        pos_out = nn.Dense(CONFIG['model']['output_dim'])(h3)
+        pos_out = nn.relu(pos_out)
+        pos_out = nn.Dense(2)(pos_out)
         
-        # Layer 6: 64 -> 32
-        x = nn.Dense(32)(x)
-        x = nn.relu(x)
+        # Steering change (sensitive to command inputs)
+        steer_out = nn.Dense(CONFIG['model']['output_dim'])(jnp.concatenate([h3, x[:, 13:15]], axis=1))  # Add raw commands
+        steer_out = nn.relu(steer_out)
+        steer_out = nn.Dense(1)(steer_out)
         
-        # Output layer: 32 -> 7 (no activation for regression)
-        x = nn.Dense(7)(x)
+        # Velocity changes
+        vel_out = nn.Dense(CONFIG['model']['output_dim'])(h3)
+        vel_out = nn.relu(vel_out)
+        vel_out = nn.Dense(2)(vel_out)
         
-        return x
+        # Angular changes
+        ang_out = nn.Dense(CONFIG['model']['output_dim'])(h3)
+        ang_out = nn.relu(ang_out)
+        ang_out = nn.Dense(2)(ang_out)
+        
+        # Combine all outputs
+        return jnp.concatenate([pos_out, steer_out, vel_out, ang_out], axis=1)
 
 def prepare_model_inputs(current_features):
     """
@@ -65,7 +84,7 @@ def create_model():
     return DynamicsModel()
 
 
-def compute_loss(params, model, inputs, targets, beta1=1.0, beta2=0.1, beta3=1e-4):
+def compute_loss(params, model, inputs, targets, beta1=CONFIG['loss_weights']['beta1'], beta2=CONFIG['loss_weights']['beta2'], beta3=CONFIG['loss_weights']['beta3']):
     # Change this line:
     # preds = model.apply({'params': params}, inputs)
     

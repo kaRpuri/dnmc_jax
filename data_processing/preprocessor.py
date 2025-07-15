@@ -3,6 +3,7 @@ import pickle
 from pathlib import Path
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from typing import NamedTuple, Tuple
+import yaml
 
 class NormalizedData(NamedTuple):
     """Container for normalized datasets"""
@@ -68,7 +69,8 @@ class Preprocessor:
 def temporal_split(
     inputs: np.ndarray,
     outputs: np.ndarray,
-    ratios: Tuple[float, float, float] = (0.7, 0.15, 0.15)
+    train_ratio: float = 0.7,
+    val_ratio: float = 0.2
 ) -> Tuple[Tuple[np.ndarray, np.ndarray], ...]:
     """
     Split data into train/val/test sets while preserving temporal order
@@ -76,16 +78,18 @@ def temporal_split(
     Args:
         inputs: (N, 15) input features
         outputs: (N, 7) target derivatives
-        ratios: (train, val, test) proportions summing to 1
+        train_ratio: proportion of data to use for training
+        val_ratio: proportion of data to use for validation
         
     Returns:
         ((train_in, train_out), (val_in, val_out), (test_in, test_out))
     """
-    assert sum(ratios) == 1.0, "Ratios must sum to 1"
+    assert 0 < train_ratio < 1 and 0 < val_ratio < 1 and train_ratio + val_ratio < 1, \
+        "Train and validation ratios must be between 0 and 1, and their sum must be less than 1"
     
     n = len(inputs)
-    train_end = int(n * ratios[0])
-    val_end = train_end + int(n * ratios[1])
+    train_end = int(n * train_ratio)
+    val_end = train_end + int(n * val_ratio)
     
     return (
         (inputs[:train_end], outputs[:train_end]),
@@ -93,75 +97,108 @@ def temporal_split(
         (inputs[val_end:], outputs[val_end:])
     )
 
+# Load configuration
+CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
+with open(CONFIG_PATH, "r") as f:
+    CONFIG = yaml.safe_load(f)
 
-
-
-
-if __name__ == "__main__":
-    from feature_extractor import load_npz_file, extract_features
-    from preprocessor import Preprocessor, temporal_split, NormalizedData
-
+def main():
+    from feature_extractor import load_npz_file, extract_features, filter_invalid_transitions
+    
     # 1. Load and process raw data
-    raw = load_npz_file("../data_record1.npz")
-    processed = extract_features(raw)
-
-    # 1.5. Shuffle data while keeping input-output pairs
-    rng = np.random.default_rng(seed=42)  # For reproducibility
-    indices = rng.permutation(len(processed.inputs))
-    shuffled_inputs = processed.inputs[indices]
-    shuffled_targets = processed.targets[indices]
-
-    # 2. Split data
+    raw_data_path = CONFIG['data']['raw_data_path']
+    control_data_path = CONFIG['data']['control_data_path']
+    
+    raw = load_npz_file(raw_data_path)
+    processed = extract_features(raw, control_data_path)
+    
+    # 1.5 Filter invalid transitions
+    filtered_data, predicted, actual = filter_invalid_transitions(processed)
+    
+    # 2. Shuffle filtered data
+    rng = np.random.default_rng(seed=CONFIG['general']['seed'])
+    indices = rng.permutation(len(filtered_data.inputs))
+    shuffled_inputs = filtered_data.inputs[indices]
+    shuffled_targets = filtered_data.targets[indices]
+    shuffled_timestamps = filtered_data.timestamps[indices]
+    shuffled_positions = filtered_data.positions[indices]
+    
+    # 3. Split filtered data into train/val/test
+    train_ratio = CONFIG['data']['split_ratio'] if 'split_ratio' in CONFIG['data'] else 0.7
+    val_ratio = CONFIG['data']['val_ratio'] if 'val_ratio' in CONFIG['data'] else 0.2
+    
     (train_in, train_out), (val_in, val_out), (test_in, test_out) = temporal_split(
-        shuffled_inputs, shuffled_targets
+        shuffled_inputs, shuffled_targets,
+        train_ratio=train_ratio,
+        val_ratio=val_ratio
     )
     
-    # 3. Initialize and fit preprocessor
-    pre = Preprocessor(method='standard')
+    # 4. Initialize and fit preprocessor
+    pre = Preprocessor(method=CONFIG['data']['normalization_method'] if 'normalization_method' in CONFIG['data'] else 'standard')
     pre.fit(train_in, train_out)
     
-    # 4. Transform all splits
+    # 5. Transform all splits
     train_in_norm, train_out_norm = pre.transform(train_in, train_out)
     val_in_norm, val_out_norm = pre.transform(val_in, val_out)
     test_in_norm, test_out_norm = pre.transform(test_in, test_out)
     
-    # 5. Validate normalization
+    # 6. Validate normalization
     print("\nNormalization Validation:")
     print(f"Train Input Mean: {train_in_norm.mean(axis=0)[:5]} (expected ~0)")
     print(f"Train Input Std: {train_in_norm.std(axis=0)[:5]} (expected ~1)")
     print(f"Train Output Mean: {train_out_norm.mean(axis=0)} (expected ~0)")
     
-    # 6. Test inverse transform
+    # 7. Test inverse transform
     original_sample = train_out[0]
     normalized_sample = train_out_norm[0]
     reconstructed = pre.output_scaler.inverse_transform([normalized_sample])[0]
     error = np.abs(original_sample - reconstructed).max()
     print(f"\nInverse Transform Test Error: {error:.2e} (should be near 0)")
     
-    # 7. Save processed data
-    output_dir = Path("./processed")
-    output_dir.mkdir(exist_ok=True)
+    # 8. Save processed data
+    processed_dir = Path(__file__).parent / "processed"
+    processed_dir.mkdir(exist_ok=True)
     
-    # Save datasets
-    np.savez(output_dir/"train.npz", inputs=train_in_norm, outputs=train_out_norm)
-    np.savez(output_dir/"val.npz", inputs=val_in_norm, outputs=val_out_norm)
-    np.savez(output_dir/"test.npz", inputs=test_in_norm, outputs=test_out_norm)
+    # Save datasets with positions and timestamps
+    np.savez(processed_dir / "train.npz", 
+             inputs=train_in_norm, 
+             outputs=train_out_norm,
+             positions=shuffled_positions[:len(train_in)],
+             timestamps=shuffled_timestamps[:len(train_in)])
     
-    # Save preprocessor
-    pre.save(output_dir/"preprocessor.pkl")
+    np.savez(processed_dir / "val.npz",
+             inputs=val_in_norm,
+             outputs=val_out_norm,
+             positions=shuffled_positions[len(train_in):len(train_in)+len(val_in)],
+             timestamps=shuffled_timestamps[len(train_in):len(train_in)+len(val_in)])
+    
+    np.savez(processed_dir / "test.npz",
+             inputs=test_in_norm,
+             outputs=test_out_norm,
+             positions=shuffled_positions[len(train_in)+len(val_in):],
+             timestamps=shuffled_timestamps[len(train_in)+len(val_in):])
     
     # Save metadata
     metadata = {
-        'split_ratios': (0.7, 0.15, 0.15),
+        'split_ratio': train_ratio,
+        'val_ratio': val_ratio,
         'original_samples': len(processed.inputs),
         'train_samples': len(train_in_norm),
         'val_samples': len(val_in_norm),
         'test_samples': len(test_in_norm),
-        'normalization_method': 'standard'
+        'normalization_method': pre.method,
+        'input_mean': pre.input_scaler.mean_,
+        'input_std': pre.input_scaler.scale_,
+        'output_mean': pre.output_scaler.mean_,
+        'output_std': pre.output_scaler.scale_
     }
-    with open(output_dir/"metadata.pkl", 'wb') as f:
+    
+    with open(processed_dir / "metadata.pkl", 'wb') as f:
         pickle.dump(metadata, f)
     
-    print(f"\nData saved to {output_dir} directory")
+    print(f"\nData saved to {processed_dir} directory")
+
+if __name__ == "__main__":
+    main()
 
 

@@ -1,0 +1,46 @@
+_wandb:
+    value:
+        cli_version: 0.20.1
+        m: []
+        python_version: 3.10.18
+        t:
+            "1":
+                - 12
+                - 45
+            "2":
+                - 12
+                - 45
+            "3":
+                - 16
+                - 55
+            "4": 3.10.18
+            "5": 0.20.1
+            "12": 0.20.1
+            "13": linux-x86_64
+data:
+    value:
+        control_data_path: ../data/raw_control_data.npz
+        raw_data_path: ../data/data_record4.npz
+        test_data_path: ../data_processing/processed/test.npz
+        train_data_path: ../data_processing/processed/train.npz
+        val_data_path: ../data_processing/processed/val.npz
+general:
+    value:
+        entity: null
+        project: vehicle-dynamics
+        run_name: null
+        save_dir: ./checkpoints
+        seed: 42
+loss_weights:
+    value:
+        beta1: 0.6
+        beta2: 0.3
+        beta3: 1e-06
+training:
+    value:
+        batch_size: 512
+        epochs: 200
+        learning_rate: 0.0003
+        patience: 30
+        warmup_epochs: 10
+        weight_decay: 1e-05
